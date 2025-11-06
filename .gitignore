@@ -1,0 +1,4 @@
+lib/iup/*
+*.o
+axeiiloader
+axeiiloader-gui
