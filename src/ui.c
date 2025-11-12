@@ -12,7 +12,7 @@
 #include <iup.h>
 #include "axeii_loader.h"
 
-/* These need ot be global for the progessCallback to update them */
+/* Made global so progessCallback can update them */
 static Ihandle *messagelabel, *progressbar;
 static char filepath[256];  /* forgive me security gods */
 
@@ -94,7 +94,7 @@ static void getMidiDevices(Ihandle *list) {
 
 /* MAIN */
 int main(int argc, char **argv) {
-    Ihandle *dlg, *frame, *box_1, *box_2, *box_3,
+    Ihandle *dlg, *frame_1, *frame_2, *box_1, *box_2, *box_3,
             *topmenu_1, *topmenu_2, *menu_1, *menu_2,
             *label_1, *label_2, *label_3,
             *entry_1, *entry_2, *entry_3,
@@ -103,26 +103,23 @@ int main(int argc, char **argv) {
 
     IupOpen(&argc, &argv);
 
-    /* Device Setup */
+    /* DEVICE SETUP */
     label_1 = IupLabel("MIDI Device:");
     label_2 = IupLabel("AXE-FX II Type:");
     entry_1 = IupList(NULL);
-    IupSetAttributes(label_1, "SIZE=75x, ALIGNMENT=ALEFT");
-    IupSetAttributes(label_2, "SIZE=75x, ALIGNMENT=ALEFT");
-    IupSetAttributes(entry_1, "DROPDOWN=YES, EXPAND=HORIZONTAL");
-    getMidiDevices(entry_1);
-    IupSetHandle("list_dev", entry_1);
-
     entry_2 = IupList(NULL);
-    IupSetAttributes(entry_2, "1=OG/MKII, 2=XL, 3=XL+, VALUE=1, DROPDOWN=YES, EXPAND=HORIZONTAL");
-    IupSetHandle("list_type", entry_2);
 
-    box_1 = IupHbox(label_1, entry_1, NULL);
-    box_2 = IupHbox(label_2, entry_2, NULL);
-    box_3 = IupVbox(box_1, box_2, NULL);
-    IupSetAttributes(box_3, "GAP=3, MARGIN=5x5, EXPAND=HORIZONTAL");
-    frame = IupFrame(box_3);
-    IupSetAttributes(frame, "TITLE=\"Device Setup\", EXPAND=HORIZONTAL");
+    IupSetAttributes(entry_1, "DROPDOWN=YES, EXPAND=HORIZONTAL");
+    IupSetAttributes(entry_2, "1=OG/MKII, 2=XL, 3=XL+, VALUE=1, DROPDOWN=YES, EXPAND=HORIZONTAL");
+    IupSetHandle("list_dev", entry_1);
+    IupSetHandle("list_type", entry_2);
+    getMidiDevices(entry_1);
+
+    box_1 = IupGridBox(label_1, entry_1, label_2, entry_2, NULL);
+    IupSetAttributes(box_1, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=2");
+    IupSetAttribute(box_1, "RASTERSIZE", "x80");  /* GridBox seems to underestimate it's size a bit */
+    frame_1 = IupFrame(box_1);
+    IupSetAttributes(frame_1, "TITLE=\"Device Setup\"");
 
     /* SEND TAB */
     label_1  = IupLabel("File:");
@@ -138,7 +135,7 @@ int main(int argc, char **argv) {
     IupSetCallback(button_1, "ACTION", (Icallback)openFile_cb);
 
     sendtab = IupGridBox(label_1, entry_1, button_1, label_2, entry_2, IupSpace(), NULL);
-    IupSetAttributes(sendtab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3");
+    IupSetAttributes(sendtab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3, CMARGIN=5x5");
     IupSetAttribute(sendtab, "TABTITLE", "SEND");
 
     /* RECEIVE TAB */
@@ -154,58 +151,42 @@ int main(int argc, char **argv) {
     IupSetHandle("recv_loc", entry_2);
     IupSetCallback(button_1, "ACTION", (Icallback)openDir_cb);
 
-    select_1 = IupToggle("PRESET", NULL);
-    select_2 = IupToggle("IR", NULL);
+    select_1 = IupSetAttributes(IupToggle("PRESET", NULL), "EXPAND=HORIZONTAL");
+    select_2 = IupSetAttributes(IupToggle("IR", NULL), "EXPAND=HORIZONTAL");
     entry_3  = IupRadio(IupHbox(select_1, select_2, NULL));
 
     recievetab = IupGridBox(label_1, entry_1, button_1,
                             label_2, entry_2, IupSpace(),
                             label_3, entry_3, IupSpace(), NULL);
 
-    IupSetAttributes(recievetab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3");
+    IupSetAttribute(recievetab, "RASTERSIZE", "x110");  /* GridBox seems to underestimate it's size a bit */
+    IupSetAttributes(recievetab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3, CMARGIN=5x5");
     IupSetAttribute(recievetab, "TABTITLE", "RECEIVE");
     tabs = IupTabs(sendtab, recievetab, NULL);
 
-    /* TRANSFER DETAILS FRAME */
-    Ihandle *status_label = IupLabel("Status:");
-    IupSetAttributes(status_label, "SIZE=60x, ALIGNMENT=ALEFT");
-    messagelabel = IupLabel("Messages displayed here");
-    IupSetAttributes(messagelabel, "EXPAND=HORIZONTAL, ALIGNMENT=ALEFT");
-    Ihandle *status_row = IupHbox(status_label, messagelabel, NULL);
-    IupSetAttributes(status_row, "GAP=6, EXPAND=HORIZONTAL");
-
-    Ihandle *progress_label = IupLabel("Progress:");
-    IupSetAttributes(progress_label, "SIZE=60x, ALIGNMENT=ALEFT, PADDING=0x4");
-    progressbar = IupProgressBar();
+    /* TRANSFER DETAILS */
+    label_1 = IupLabel("Status:");
+    label_2 = IupLabel("Progress:");
+    messagelabel = IupLabel("Messages Will Display Here.");
+    progressbar  = IupProgressBar();
+    IupSetAttributes(messagelabel, "EXPAND=HORIZONTAL");
     IupSetAttributes(progressbar, "MIN=0, MAX=100, VALUE=0, EXPAND=HORIZONTAL, SIZE=120x14");
-    Ihandle *progress_row = IupHbox(progress_label, progressbar, NULL);
-    IupSetAttributes(progress_row, "GAP=6, EXPAND=HORIZONTAL");
-
-    Ihandle *transfer_box = IupVbox(status_row, progress_row, NULL);
-    IupSetAttributes(transfer_box, "GAP=6, MARGIN=8x8, EXPAND=HORIZONTAL");
-
-    Ihandle *transfer_frame = IupFrame(transfer_box);
-    IupSetAttributes(transfer_frame, "TITLE=\"Transfer Details\", EXPAND=HORIZONTAL");
+    box_1 = IupGridBox(label_1, messagelabel, label_2, progressbar, NULL);
+    IupSetAttributes(box_1, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=2, CMARGIN=5x5");
+    IupSetAttribute(box_1, "RASTERSIZE", "x80");  /* GridBox seems to underestimate it's size a bit */
+    frame_2 = IupFrame(box_1);
+    IupSetAttributes(frame_2, "TITLE=\"Transfer Details\", EXPAND=HORIZONTAL");
 
     /* START BUTTON */
     button_1 = IupButton("Start", NULL);
     IupSetAttributes(button_1, "SIZE=80x20, ACTIVE=NO");
     IupSetCallback(button_1, "ACTION", (Icallback)start_cb);
-
-    Ihandle *button_row = IupHbox(IupFill(), button_1, NULL);
-    IupSetAttributes(button_row, "MARGIN=0x5, EXPAND=HORIZONTAL");
-
-    Ihandle *bottom_box = IupVbox(
-        transfer_frame,
-        IupFill(),
-        button_row,
-        NULL);
-    IupSetAttributes(bottom_box, "GAP=4, EXPAND=YES");
+    box_2 = IupHbox(IupFill(), button_1, NULL);
+    IupSetAttributes(box_2, "MARGIN=0x5, EXPAND=HORIZONTAL");
 
     /* MAIN LAYOUT */
-    Ihandle *top_box = IupVbox(frame, tabs, NULL);
-    box_1 = IupVbox(top_box, bottom_box, NULL);
-    IupSetAttributes(box_1, "GAP=6, MARGIN=6x6, EXPAND=YES");
+    box_1 = IupVbox(frame_1, tabs, frame_2, IupFill(), box_2, NULL);
+    IupSetAttributes(box_1, "GAP=10, MARGIN=6x6");
 
     /* MENUS */
     menu_1  = IupItem("Exit", NULL);
@@ -218,7 +199,7 @@ int main(int argc, char **argv) {
 
     /* DIALOG */
     dlg = IupDialog(box_1);
-    IupSetAttributes(dlg, "TITLE=\"AXE-FX II LOADER\", MINSIZE=350x570, RESIZE=NO, SHRINK=YES");
+    IupSetAttributes(dlg, "TITLE=\"AXE-FX II LOADER\", MAXSIZE=350x500, RESIZE=NO");
     IupSetAttributeHandle(dlg, "MENU", menu_1);
 
     IupShowXY(dlg, IUP_CENTER, IUP_CENTER);
