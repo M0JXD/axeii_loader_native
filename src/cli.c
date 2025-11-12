@@ -6,9 +6,9 @@
  * NO WARRANTY IS PROVIDED, USE AT YOUR OWN RISK.
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include <unistd.h>
 #include "axeii_loader.h"
 
@@ -16,6 +16,15 @@
 enum modes { SEND = 1, RECEIVE };
 
 /* FUNCTIONS */
+
+/* Handy Util */ /*
+static void printTenBytes(char *command) {
+    printf("Bytes are: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n",
+            command[0], command[1], command[2], command[3], command[4],
+            command[5], command[6], command[7], command[8], command[9]
+          );
+} */
+
 static void usage() {
     puts("=== Axe-FX II Loader Help Text ===");
     puts("-d and either -i or -o with a file name must be provided. You can't provide both -i and -o.");
@@ -31,28 +40,28 @@ static void usage() {
     puts("=== END OF HELP ===");
 }
 
-
 /* axeii_loader needs us to implement this */
 void progressCallback(int currentProgress) {
-    (void)currentProgress; /* Suppress unused warning */
-    printf(".");
-    fflush(stdout);
+    if (currentProgress <= -1) {
+        puts("Trying to lock onto header...");
+    } else if (currentProgress == 0) {
+        printf("Progress: 0%% ...");
+        fflush(stdout);
+    } else if (currentProgress == 100) {
+        printf(" 100%%\n");
+    } else {
+        printf(".");
+        fflush(stdout);
+    }
 }
-
-/* Handy Util */ /*
-static void printTenBytes(char *command) {
-    printf("Bytes are: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n",
-            command[0], command[1], command[2], command[3], command[4],
-            command[5], command[6], command[7], command[8], command[9]
-          );
-} */
 
 /* MAIN ENTRY */
 int main(int argc, char *argv[]) {
-    char properties                       /* See the defines in axeii_loader.h */
-    char mode           = 0;              /* See enum modes */
-    int location          = 0;            /* Preset or cab number */
-    char path[256]      = "";             /* For file path. Forgive me security gods... */
+    char properties    = OG_PRESET;       /* See the defines in axeii_loader.h */
+    char mode          = 0;               /* See enum modes */
+    int location       = 0;               /* Preset or cab number */
+
+    char path[256]     = "";              /* For file path. Forgive me security gods... */
     char devString[32] = { '\0', '\0' };  /* ALSA device string */
 
     int ret = 0;
@@ -88,29 +97,32 @@ int main(int argc, char *argv[]) {
                 strcpy(path, optarg);
             break;
 
-            /* IR or Preset receive mode */
+            /* Set IR receive mode */
             case 'm':
-                type = IR;
+                properties &= 0x1D;  /* 0b11101 */
             break;
 
             /* Preset or IR number */
             case 'p':
-                number = atoi(optarg);
+                location = atoi(optarg);
             break;
 
             case 't':
                 switch (optarg[0]) {
                     default:
                     case 'o':
-                        unitType = OG;
+                        properties &= 0x03;  /* 0b00011 */
+                        properties |= IS_OG;
                         puts("Axe-FX Type set to OG/MkII");
                     break;
                     case 'x':
-                        unitType = XL;
+                        properties &= 0x03;  /* 0b00011 */
+                        properties |= IS_XL;
                         puts("Axe-FX Type set to XL");
                     break;
                     case 'p':
-                        unitType = XLP;
+                        properties &= 0x03;  /* 0b00011 */
+                        properties |= IS_XLP;
                         puts("Axe-FX Type set to XL Plus");
                     break;
 
@@ -148,37 +160,36 @@ int main(int argc, char *argv[]) {
 
     /* Run actions */
     if (ret == 0) {
+        char* type = properties & IS_PRESET ? "Preset" : "IR";
+        char* unit = properties & IS_OG ? "OG/MKII" :
+                          properties & IS_XL ? "XL" : "XL Plus";
+
         if (mode == SEND) {
             puts("=== SEND MODE ===");
-            type = detectFileProperties(path);
-
-            switch (type) {
-
-                case OG_IR:
-                case OG_PRESET:
-
-
-
+            properties = detectFileProperties(path);
+            if (properties <= 0) {
+                printf("Detected a %s file for a %s\n", type, unit);
+                properties & IS_PRESET ? puts("Attempting to send to edit buffer...") :
+                                         printf("Attempting to send to location %d...\n", location);
             }
-
-
-            if (type == PRESET) {
-                ret = sendPreset(path, unitType, fileUnit);
-            } else if (type == IR) {
-                ret = sendIR(number, path, unitType, fileUnit);
-            } else {
-                ret = 1;
-            }
+            ret = sendFile(path, properties, location);
         } else if (mode == RECEIVE) {
             puts("=== RECEIVE MODE ===");
-            if (type == PRESET) {
-                ret = getPreset(number, path, unitType);
-            } else if (type == IR) {
-                ret = getIR(number, path, unitType);
-            }
+            printf("Attempting to get a %s file from a %s from location %d...\n", type, unit, location);
+            ret = getFile(path, properties, location);
+        }
+
+        if (ret == FILE_ERROR) {
+            puts("Couldn't open file!");
+        } else if (ret == DESTINATION_UNIT_INVALID) {
+            puts("Can't send XL/XL+ file to OG/MKII!");
+        } else if (ret == HEADER_LOCK_ISSUE) {
+            puts("Couldn't lock onto header!");
+        } else if (ret == PROPERTIES_INVALID) {
+            puts("File and/or values are not valid!");
         }
         closeRawMIDIHandles();
     }
-    if (ret == 0) puts("Thank you :)");
+    if (ret == 0) puts("Transfer success!\nThank you :)");
     return ret;
 }

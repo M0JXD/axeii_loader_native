@@ -19,12 +19,28 @@
  * 3: Is XL file
  * 4: Is XL+ file
  */
-#define OG_IR          0b00000101
-#define OG_PRESET      0b00000111
-#define XL_IR          0b00001001
-#define XL_PRESET      0b00001011
-#define XL_PLUS_IR     0b00010001
-#define XL_PLUS_PRESET 0b00010011
+#define OG_IR      0x05  /* 0b00101 */
+#define OG_PRESET  0x07  /* 0b00111 */
+#define XL_IR      0x09  /* 0b01001 */
+#define XL_PRESET  0x0B  /* 0b01011 */
+#define XLP_IR     0x11  /* 0b10001 */
+#define XLP_PRESET 0x13  /* 0b10011 */
+
+/* MASKS */
+#define IS_VALID   0x01  /* 0b00001 */
+#define IS_IR      0x00  /* 0b00000 */
+#define IS_PRESET  0x02  /* 0b00010 */
+#define IS_OG      0x04  /* 0b00100 */
+#define IS_XL      0x08  /* 0b01000 */
+#define IS_XLP     0x10  /* 0b10000 */
+
+/* ENUMS */
+enum errors {
+    FILE_ERROR = -1,
+    DESTINATION_UNIT_INVALID = -2,
+    HEADER_LOCK_ISSUE = -3,
+    PROPERTIES_INVALID = -4
+};
 
 /* FUNCTION DECLARATIONS */
 
@@ -53,7 +69,6 @@ char detectFileProperties(char* pathToPreset);
  */
 char sendFile(char* pathToFile, char properties, int location);
 
-
 /** Get a file of the given properties from a location
  * @param char* pathToSave Path to save the obtained .syx file
  * @param char properties Properties of the unit and file wanted
@@ -63,7 +78,7 @@ char sendFile(char* pathToFile, char properties, int location);
 char getFile(char* pathToSave, char properties, int location);
 
 /** User implemented function to allow the library to provide transaction progress
- * @param int currentProgress the current progress of the library
+ * @param int currentProgress the current progress of the library, from 0 to 100. Negative numbers are passed for header locking.
  */
 void progressCallback(int currentProgress);
 
