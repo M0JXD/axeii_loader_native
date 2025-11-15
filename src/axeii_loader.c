@@ -34,6 +34,7 @@ char detectFileProperties(char* pathToPreset) {
     char ret = 0;
     unsigned char buffer[6] = { 0, 0, 0, 0, 0, 0 };
     FILE *file = fopen(pathToPreset, "r");
+    if (file == NULL) return FILE_ERROR;
     int read = fread(buffer, sizeof(char), 6, file);
     if (read != 6) {
         ret = FILE_ERROR;
@@ -182,6 +183,8 @@ static char sendPreset(char* pathToPreset, char properties) {
     unsigned int endAddress;
     unsigned char buffer[12951];
     FILE * file = fopen(pathToPreset, "r");
+    if (file == NULL) return FILE_ERROR;
+
     if (properties & IS_OG) {
         dataMessages = 32;
         endAddress = 6476;
@@ -263,6 +266,7 @@ static char getPreset(char* pathToSave, char properties, int location) {
 
         /* Save the preset */
         FILE * file = fopen(pathToSave, "wb");
+        if (file == NULL) return FILE_ERROR;
         fwrite(buffer, sizeof(unsigned char), 6487, file);
         fclose(file);
     }
@@ -275,6 +279,7 @@ static char sendIR(char* pathToIR, char properties, int location) {
     unsigned char buffer[10905];
     int read;
     FILE *file = fopen(pathToIR, "r");
+    if (file == NULL) return FILE_ERROR;
 
     if (properties & IS_OG) {
         irInfoStart = 11;
@@ -348,6 +353,7 @@ static char getIR(char* pathToSave, char properties, int location) {
 
         /* Save the IR */
         FILE * file = fopen(pathToSave, "wb");
+        if (file == NULL) return FILE_ERROR;
         if (properties & IS_OG) {
             fwrite(buffer, sizeof(unsigned char), 10904, file);
         } else {
@@ -381,4 +387,8 @@ char getFile(char* pathToSave, char properties, int location) {
         ret = PROPERTIES_INVALID;
     }
     return ret;
+}
+
+char getMidiDevs() {
+
 }
