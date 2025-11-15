@@ -12,72 +12,31 @@
 #include <iup.h>
 #include "axeii_loader.h"
 
-/* Made global so progessCallback can update them */
-static Ihandle *messagelabel, *progressbar;
-static char filepath[256];  /* forgive me security gods */
+static enum {
+    SEND_MODE = 1,
+    RECEIVE_MODE
+} mode = SEND_MODE;
+
+static Ihandle *startbutton, *messagelabel, *progressbar;
+static char filepath[256], midiDevice[20];  /* Forgive me security gods */
+static char properties = 0;
+static int location;
 
 void progressCallback(int currentProgress) {
     char valAsString[16];
     sprintf(valAsString, "%d", currentProgress);
     if (currentProgress >= 0) {
-        IupSetAttribute(messagelabel, "VALUE", "Doing transfer...");
+        IupSetAttribute(messagelabel, "TITLE", "Doing transfer...");
         IupSetAttribute(progressbar, "VALUE", valAsString);
     } else {
-        IupSetAttribute(messagelabel, "VALUE", "Trying to capture header...");
+        IupSetAttribute(messagelabel, "TITLE", "Trying to capture header...");
     }
-}
-
-static int openFile_cb(void) {
-    if (IupGetFile(filepath))
-        IupSetAttribute(IupGetHandle("send_file"), "VALUE", filepath);
-    return IUP_DEFAULT;
-}
-
-static int openDir_cb(void) {
-    Ihandle *dlg = IupFileDlg();
-    IupSetAttribute(dlg, "DIALOGTYPE", "DIR");
-    if (IupPopup(dlg, IUP_CENTER, IUP_CENTER) == IUP_NOERROR) {
-        char *dir = IupGetAttribute(dlg, "VALUE");
-        if (dir) IupSetAttribute(IupGetHandle("recv_dir"), "VALUE", dir);
-    }
-    IupDestroy(dlg);
-    return IUP_DEFAULT;
-}
-
-static int start_cb(void) {
-    char *midiDevice = IupGetAttribute(IupGetHandle("list_dev"), "VALUE");
-    if (!midiDevice || midiDevice[0] == 0) return IUP_DEFAULT;
-
-    /* Setup unit type */
-    int loc = atoi(IupGetAttribute(IupGetHandle("send_loc"), "VALUE"));
-    char *filePath = IupGetAttribute(IupGetHandle("send_file"), "VALUE");
-    char prop = detectFileProperties(filePath);
-
-    /* Call your library sendFile/getFile as needed here */
-    sendFile(filePath, prop, loc);
-
-    return IUP_DEFAULT;
-}
-
-static int exit_cb(void) { return IUP_CLOSE; }
-
-static void show_notes_cb(void) {
-    Ihandle *note1 = IupLabel("Note: Preset location is ignored when sending to edit buffer.");
-    Ihandle *note2 = IupLabel("Note: Scratchpad presets start at 101+ on MkII units.");
-    Ihandle *box   = IupVbox(
-        IupSetAttributes(note1, "EXPAND=HORIZONTAL"),
-        IupSetAttributes(note2, "EXPAND=HORIZONTAL"),
-        NULL);
-    Ihandle *dlg = IupDialog(box);
-    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=300x100");
-    IupPopup(dlg, IUP_CENTER, IUP_CENTER);
-    IupDestroy(dlg);
 }
 
 /* Get MIDI devices using `amidi -l` */
 static void getMidiDevices(Ihandle *list) {
     FILE *fp = popen("amidi -l", "r");
-    if (!fp) return;
+    if (!fp) exit(-1);
     char line[256];
     int idx = 1;
     while (fgets(line, sizeof(line), fp)) {
@@ -92,6 +51,80 @@ static void getMidiDevices(Ihandle *list) {
     if (idx == 1) IupSetAttributeId(list, "", 1, ""); /* at least one */
 }
 
+static char detectAndEnable(char* filepath) {
+    if(midiDevice) {
+        if (mode == SEND_MODE) {
+            properties = detectFileProperties(filepath);
+        } else if (mode == RECEIVE_MODE) {
+            ;
+        }
+        if (properties)
+            IupSetAttribute(startbutton, "ACTIVE", "YES");
+    }
+    return 0;
+}
+
+static int setMode_cb(Ihandle* ih, int new_pos, int old_pos) {
+    mode = new_pos + 1;
+    detectAndEnable(filepath);
+    return IUP_DEFAULT;
+}
+
+
+static int openFile_cb(void) {
+    if (IupGetFile(filepath) + 1) {
+        IupSetAttribute(IupGetHandle("send_file"), "VALUE", filepath);
+        detectAndEnable(filepath);
+    }
+    return IUP_DEFAULT;
+}
+
+static int openDir_cb(void) {
+    Ihandle *dlg = IupFileDlg();
+    IupSetAttribute(dlg, "DIALOGTYPE", "DIR");
+    if (IupPopup(dlg, IUP_CENTER, IUP_CENTER) == IUP_NOERROR) {
+        char *dir = IupGetAttribute(dlg, "VALUE");
+        if (dir) IupSetAttribute(IupGetHandle("recv_dir"), "VALUE", dir);
+    }
+    IupDestroy(dlg);
+    /*detectAndEnable(filepath);*/
+    return IUP_DEFAULT;
+}
+
+static int start_cb(void) {
+    char *midiDevice = IupGetAttribute(IupGetHandle("list_dev"), "VALUE");
+    int location = atoi(IupGetAttribute(IupGetHandle("send_loc"), "VALUE"));
+    IupSetAttribute(progressbar, "VALUE", "0");
+
+    setupRawMIDIHandles("");
+    if (mode == SEND_MODE) {
+        char prop = detectFileProperties(filepath);
+        sendFile(filepath, properties, location);
+    } else if (mode == RECEIVE_MODE) {
+        /* TODO: Append a name to the path */
+        getFile(filepath, properties, location);
+    }
+
+    closeRawMIDIHandles();
+    return IUP_DEFAULT;
+}
+
+static void show_notes_cb(void) {
+    Ihandle *note1 = IupLabel("Note 1: Preset location is ignored when sending to edit buffer.");
+    Ihandle *note2 = IupLabel("Note 2: Scratchpad presets start at 101+ on MkII units.");
+    Ihandle *note3 = IupLabel("Note 3: XL/XL+ usage is untested, please see README and send feedback!")
+    Ihandle *box   = IupVbox(
+        IupSetAttributes(note1, "EXPAND=HORIZONTAL"),
+        IupSetAttributes(note2, "EXPAND=HORIZONTAL"),
+        NULL);
+    Ihandle *dlg = IupDialog(box);
+    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=260x35, RESIZE=NO, MINBOX=NO");
+    IupPopup(dlg, IUP_CENTER, IUP_CENTER);
+    IupDestroy(dlg);
+}
+
+static int exit_cb(void) { return IUP_CLOSE; }
+
 /* MAIN */
 int main(int argc, char **argv) {
     Ihandle *dlg, *frame_1, *frame_2, *box_1, *box_2, *box_3,
@@ -99,7 +132,7 @@ int main(int argc, char **argv) {
             *label_1, *label_2, *label_3,
             *entry_1, *entry_2, *entry_3,
             *select_1, *select_2, *button_1,
-            *sendtab, *recievetab, *tabs;
+            *sendtab, *receivetab, *tabs;
 
     IupOpen(&argc, &argv);
 
@@ -116,7 +149,8 @@ int main(int argc, char **argv) {
     getMidiDevices(entry_1);
 
     box_1 = IupGridBox(label_1, entry_1, label_2, entry_2, NULL);
-    IupSetAttributes(box_1, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=2");
+    IupSetAttributes(box_1, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
+                            "GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=2");
     IupSetAttribute(box_1, "RASTERSIZE", "x80");  /* GridBox seems to underestimate it's size a bit */
     frame_1 = IupFrame(box_1);
     IupSetAttributes(frame_1, "TITLE=\"Device Setup\"");
@@ -129,13 +163,14 @@ int main(int argc, char **argv) {
     entry_2  = IupText(NULL);
 
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=384, SPININC=1");
+    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=384");
     IupSetHandle("send_file", entry_1);
     IupSetHandle("send_loc", entry_2);
     IupSetCallback(button_1, "ACTION", (Icallback)openFile_cb);
 
     sendtab = IupGridBox(label_1, entry_1, button_1, label_2, entry_2, IupSpace(), NULL);
-    IupSetAttributes(sendtab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3, CMARGIN=5x5");
+    IupSetAttributes(sendtab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
+                              "GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3, CMARGIN=5x5");
     IupSetAttribute(sendtab, "TABTITLE", "SEND");
 
     /* RECEIVE TAB */
@@ -146,7 +181,7 @@ int main(int argc, char **argv) {
     button_1 = IupButton("Browse...", NULL);
     entry_2 = IupText(NULL);
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=384, SPININC=1");
+    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=384");
     IupSetHandle("recv_dir", entry_1);
     IupSetHandle("recv_loc", entry_2);
     IupSetCallback(button_1, "ACTION", (Icallback)openDir_cb);
@@ -155,14 +190,16 @@ int main(int argc, char **argv) {
     select_2 = IupSetAttributes(IupToggle("IR", NULL), "EXPAND=HORIZONTAL");
     entry_3  = IupRadio(IupHbox(select_1, select_2, NULL));
 
-    recievetab = IupGridBox(label_1, entry_1, button_1,
+    receivetab = IupGridBox(label_1, entry_1, button_1,
                             label_2, entry_2, IupSpace(),
                             label_3, entry_3, IupSpace(), NULL);
 
-    IupSetAttribute(recievetab, "RASTERSIZE", "x110");  /* GridBox seems to underestimate it's size a bit */
-    IupSetAttributes(recievetab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3, CMARGIN=5x5");
-    IupSetAttribute(recievetab, "TABTITLE", "RECEIVE");
-    tabs = IupTabs(sendtab, recievetab, NULL);
+    IupSetAttribute(receivetab, "RASTERSIZE", "x110");  /* GridBox seems to underestimate it's size a bit */
+    IupSetAttributes(receivetab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
+                                 "GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3, CMARGIN=5x5");
+    IupSetAttribute(receivetab, "TABTITLE", "RECEIVE");
+    tabs = IupTabs(sendtab, receivetab, NULL);
+    IupSetCallback(tabs, "TABCHANGEPOS_CB", (Icallback)setMode_cb);
 
     /* TRANSFER DETAILS */
     label_1 = IupLabel("Status:");
@@ -172,24 +209,23 @@ int main(int argc, char **argv) {
     IupSetAttributes(messagelabel, "EXPAND=HORIZONTAL");
     IupSetAttributes(progressbar, "MIN=0, MAX=100, VALUE=0, EXPAND=HORIZONTAL, SIZE=120x14");
     box_1 = IupGridBox(label_1, messagelabel, label_2, progressbar, NULL);
-    IupSetAttributes(box_1, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT, GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=2, CMARGIN=5x5");
+    IupSetAttributes(box_1, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
+                            "GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=2, CMARGIN=5x5");
     IupSetAttribute(box_1, "RASTERSIZE", "x80");  /* GridBox seems to underestimate it's size a bit */
     frame_2 = IupFrame(box_1);
     IupSetAttributes(frame_2, "TITLE=\"Transfer Details\", EXPAND=HORIZONTAL");
 
-    /* START BUTTON */
-    button_1 = IupButton("Start", NULL);
-    IupSetAttributes(button_1, "SIZE=80x20, ACTIVE=NO");
-    IupSetCallback(button_1, "ACTION", (Icallback)start_cb);
-    box_2 = IupHbox(IupFill(), button_1, NULL);
+    /* START BUTTON AND LAYOUT */
+    startbutton = IupButton("Start", NULL);
+    IupSetAttributes(startbutton, "SIZE=60x18, ACTIVE=NO");
+    IupSetCallback(startbutton, "ACTION", (Icallback)start_cb);
+    box_2 = IupHbox(IupFill(), startbutton, NULL);
     IupSetAttributes(box_2, "MARGIN=0x5, EXPAND=HORIZONTAL");
-
-    /* MAIN LAYOUT */
-    box_1 = IupVbox(frame_1, tabs, frame_2, IupFill(), box_2, NULL);
+    box_1 = IupVbox(frame_1, tabs, frame_2, box_2, NULL);
     IupSetAttributes(box_1, "GAP=10, MARGIN=6x6");
 
-    /* MENUS */
-    menu_1  = IupItem("Exit", NULL);
+    /* MENU */
+    menu_1 = IupItem("Exit", NULL);
     menu_2 = IupItem("Notes", NULL);
     IupSetCallback(menu_1, "ACTION", (Icallback)exit_cb);
     IupSetCallback(menu_2, "ACTION", (Icallback)show_notes_cb);
