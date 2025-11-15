@@ -60,7 +60,6 @@ int main(int argc, char *argv[]) {
     char properties    = OG_PRESET;       /* See the defines in axeii_loader.h */
     char mode          = 0;               /* See enum modes */
     int location       = 0;               /* Preset or cab number */
-
     char path[256]     = "";              /* For file path. Forgive me security gods... */
     char devString[32] = { '\0', '\0' };  /* ALSA device string */
 
