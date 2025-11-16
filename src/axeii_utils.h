@@ -1,4 +1,4 @@
-/*    axeii_loader.h - Defines and declarations to send/receive data from an Axe-FX II
+/*    axeii_utils.h - Defines and declarations to send/receive data from an Axe-FX II
  *    Copyright (C) 2025  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  *    with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef AXEII_LOADER_H
-#define AXEII_LOADER_H
+#ifndef AXEII_UTILS_H
+#define AXEII_UTILS_H
 
 /* DEFINES */
 /* File Properties */
@@ -91,4 +91,4 @@ char getFile(char* pathToSave, char properties, int location);
  */
 void progressCallback(int currentProgress);
 
-#endif /* AXEII_LOADER_H */
+#endif /* AXEII_UTILS_H */

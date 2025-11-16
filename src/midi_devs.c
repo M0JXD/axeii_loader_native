@@ -44,7 +44,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <alsa/asoundlib.h>
-#include "midi_dev.h"
+#include "midi_devs.h"
 
 /*static int list_all;*/
 
@@ -112,6 +112,8 @@ static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev)
 			/*       sub < subs_in ? 'I' : ' ',*/
 			/*       sub < subs_out ? 'O' : ' ',*/
 			/*       card, device, name);*/
+			sprintf(dev->hw_string, "hw:%d,%d", card, device);
+			sprintf(dev->hw_name, "%s", name);
 			if (subs > 1)
 				/*printf(" (%d subdevices)", subs);*/
 			/*putchar('\n');*/
@@ -121,10 +123,11 @@ static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev)
 			/*       sub < subs_in ? 'I' : ' ',*/
 			/*       sub < subs_out ? 'O' : ' ',*/
 			/*       card, device, sub, sub_name);*/
+			sprintf(dev->hw_string, "hw:%d,%d,%d", card, device, sub);
+			sprintf(dev->hw_name, "%s", sub_name);
 		}
 	}
-    sprintf(dev->hw_string, "hw:%d,%d", card, device);
-    sprintf(dev->hw_name, "%s", name);
+
 }
 
 static void list_card_devices(int card, dev_info_t **devs)
@@ -134,7 +137,6 @@ static void list_card_devices(int card, dev_info_t **devs)
 	int device;
 	int err;
 
-	sprintf(name, "hw:%d", card);
 	if ((err = snd_ctl_open(&ctl, name, 0)) < 0) {
 		error("cannot open control for card %d: %s", card, snd_strerror(err));
 		return;
@@ -153,7 +155,7 @@ static void list_card_devices(int card, dev_info_t **devs)
 }
 
 
-/* Essentially amidi -l start point*/
+/* Essentially amidi -l start point */
 static int device_list(dev_info_t** devs)
 {
 	int card, err, amount = 0;
@@ -186,11 +188,7 @@ dev_info_t** get_axe_midi_devs(int *amount, int *axe_index) {
     *axe_index = -1;
 
     devs = (dev_info_t**)malloc(sizeof(dev_info_t*) * 5);
-    devs[0] = (dev_info_t*)malloc(sizeof(dev_info_t));
-    devs[1] = (dev_info_t*)malloc(sizeof(dev_info_t));
-    devs[2] = (dev_info_t*)malloc(sizeof(dev_info_t));
-    devs[3] = (dev_info_t*)malloc(sizeof(dev_info_t));
-    devs[4] = (dev_info_t*)malloc(sizeof(dev_info_t));
+    devs[0] = (dev_info_t*)malloc(sizeof(dev_info_t) * 5);
 
     *amount = device_list(devs);
 
@@ -205,9 +203,5 @@ dev_info_t** get_axe_midi_devs(int *amount, int *axe_index) {
 
 void free_axe_midi_devs(dev_info_t **devs) {
     free(devs[0]);
-    free(devs[1]);
-    free(devs[2]);
-    free(devs[3]);
-    free(devs[4]);
     free(devs);
 }

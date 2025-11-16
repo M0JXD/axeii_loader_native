@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <iup.h>
-#include "axeii_loader.h"
+#include "axeii_utils.h"
 #include "midi_devs.h"
 
 static enum {

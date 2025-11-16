@@ -1,4 +1,4 @@
-/*    axeii_loader.c - Utility functions to send/receive data from an Axe-FX II
+/*    axeii_utils.c - Utility functions to send/receive data from an Axe-FX II
  *    Copyright (C) 2025  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  */
 
 #include <alsa/asoundlib.h>
-#include "axeii_loader.h"
+#include "axeii_utils.h"
 
 /* GLOBALS */
 static snd_rawmidi_t *handleIn = 0, *handleOut = 0;
@@ -397,7 +397,3 @@ char getFile(char* pathToSave, char properties, int location) {
     }
     return ret;
 }
-
-/*struct ** getMidiDevs() {*/
-/**/
-/*}*/

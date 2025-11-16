@@ -9,27 +9,28 @@ gtk3libs := -lgtk-3 -lgdk-3 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lpango-1.0 -lcair
 
 all: cli gui
 
-cli: libaxeii_loader.o src/cli.c
-	gcc src/cli.c libaxeii_loader.o -o axeiiloader -Wall -Werror -Wextra -Wpedantic -lasound -O2
+cli: axeii_utils.o midi_devs.o src/cli.c
+	gcc src/cli.c axeii_utils.o midi_devs.o -o axeiiloader -Wall -Werror -Wextra -Wpedantic -lasound -O2
 
-gui: libaxeii_loader.o src/ui.c
-	gcc src/ui.c libaxeii_loader.o -o axeiiloader-gui \
+gui: axeii_utils.o src/ui.c
+	gcc src/ui.c axeii_utils.o -o axeiiloader-gui \
 	-I./lib/iup/include \
 	-L./lib/iup \
 	-Wl,-Bstatic -liup \
 	-Wl,-Bdynamic $(gtk3libs) -lasound -O2
 
-libaxeii_loader.o: src/axeii_loader.c src/axeii_loader.h
+axeii_utils.o: src/axeii_utils.c src/axeii_utils.h
 	# gcc O2 optimisations mess up calculating the sysex checksum.
-	gcc -c src/axeii_loader.c -o libaxeii_loader.o -lasound -O1
+	gcc -c src/axeii_utils.c -o axeii_utils.o -lasound -O1
 
-midi_devs.o: src/midi_devs.c
+midi_devs.o: src/midi_devs.c src/midi_devs.h
 	gcc -c src/midi_devs.c -o midi_devs.o -lasound -O2
 
 cli-tcc:
 	# Build the CLI version with TCC bc why not? You should start clean for this!
-	tcc -c src/axeii_loader.c -o libaxeii_loader.o
-	tcc src/cli.c libaxeii_loader.o -o axeiiloader -Wall -lasound
+	tcc -c src/axeii_utils.c -o axeii_utils.o
+	tcc -c src/midi_devs.c -o midi_devs.o
+	tcc src/cli.c axeii_utils.o midi_devs.o -o axeiiloader -Wall -lasound
 
 clean:
-	rm axeiiloader axeiiloader-gui libaxeii_loader.o
+	rm axeiiloader axeiiloader-gui axeii_utils.o midi_devs.o
