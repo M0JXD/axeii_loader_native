@@ -1,9 +1,18 @@
-/* Copyright 2025 Jamie Drinkell. MIT License. */
-
-/* A simple utility to load presets and IRs in/out of an Axe-FX II
- * Only tested on Linux Mint 22.2 with an Axe-FX II MkII
- * Unsure if it will work for XL/XL+ units.
- * NO WARRANTY IS PROVIDED, USE AT YOUR OWN RISK.
+/*    ui.c - GUI interface to send/receive data from an Axe-FX II
+ *    Copyright (C) 2025  Jamie Drinkell
+ *
+ *    This program is free software; you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation; either version 2 of the License, or
+ *    (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License along
+ *    with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <stdlib.h>
@@ -11,6 +20,7 @@
 #include <string.h>
 #include <iup.h>
 #include "axeii_loader.h"
+#include "midi_devs.h"
 
 static enum {
     SEND_MODE = 1,
@@ -87,7 +97,7 @@ static int openDir_cb(void) {
         if (dir) IupSetAttribute(IupGetHandle("recv_dir"), "VALUE", dir);
     }
     IupDestroy(dlg);
-    /*detectAndEnable(filepath);*/
+    detectAndEnable(filepath);
     return IUP_DEFAULT;
 }
 
@@ -112,13 +122,14 @@ static int start_cb(void) {
 static void show_notes_cb(void) {
     Ihandle *note1 = IupLabel("Note 1: Preset location is ignored when sending to edit buffer.");
     Ihandle *note2 = IupLabel("Note 2: Scratchpad presets start at 101+ on MkII units.");
-    Ihandle *note3 = IupLabel("Note 3: XL/XL+ usage is untested, please see README and send feedback!")
+    Ihandle *note3 = IupLabel("Note 3: XL/XL+ usage is untested, please see README and send feedback!");
     Ihandle *box   = IupVbox(
         IupSetAttributes(note1, "EXPAND=HORIZONTAL"),
         IupSetAttributes(note2, "EXPAND=HORIZONTAL"),
+        IupSetAttributes(note3, "EXPAND=HORIZONTAL"),
         NULL);
     Ihandle *dlg = IupDialog(box);
-    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=260x35, RESIZE=NO, MINBOX=NO");
+    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=320x50, RESIZE=NO, MINBOX=NO");
     IupPopup(dlg, IUP_CENTER, IUP_CENTER);
     IupDestroy(dlg);
 }
@@ -202,16 +213,12 @@ int main(int argc, char **argv) {
     IupSetCallback(tabs, "TABCHANGEPOS_CB", (Icallback)setMode_cb);
 
     /* TRANSFER DETAILS */
-    label_1 = IupLabel("Status:");
-    label_2 = IupLabel("Progress:");
-    messagelabel = IupLabel("Messages Will Display Here.");
+    messagelabel = IupLabel("Messages Will Display Here. Progress Bar Is Below.");
     progressbar  = IupProgressBar();
     IupSetAttributes(messagelabel, "EXPAND=HORIZONTAL");
-    IupSetAttributes(progressbar, "MIN=0, MAX=100, VALUE=0, EXPAND=HORIZONTAL, SIZE=120x14");
-    box_1 = IupGridBox(label_1, messagelabel, label_2, progressbar, NULL);
-    IupSetAttributes(box_1, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
-                            "GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=2, CMARGIN=5x5");
-    IupSetAttribute(box_1, "RASTERSIZE", "x80");  /* GridBox seems to underestimate it's size a bit */
+    IupSetAttributes(progressbar, "MIN=0, MAX=100, VALUE=0, EXPAND=HORIZONTAL");
+    box_1 = IupVbox(messagelabel, progressbar, NULL);
+    IupSetAttributes(box_1, "GAP=1");
     frame_2 = IupFrame(box_1);
     IupSetAttributes(frame_2, "TITLE=\"Transfer Details\", EXPAND=HORIZONTAL");
 

@@ -23,6 +23,9 @@ libaxeii_loader.o: src/axeii_loader.c src/axeii_loader.h
 	# gcc O2 optimisations mess up calculating the sysex checksum.
 	gcc -c src/axeii_loader.c -o libaxeii_loader.o -lasound -O1
 
+midi_devs.o: src/midi_devs.c
+	gcc -c src/midi_devs.c -o midi_devs.o -lasound -O2
+
 cli-tcc:
 	# Build the CLI version with TCC bc why not? You should start clean for this!
 	tcc -c src/axeii_loader.c -o libaxeii_loader.o
