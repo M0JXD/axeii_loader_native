@@ -58,7 +58,7 @@ static void error(const char *format, ...)
 	putc('\n', stderr);
 }
 
-static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev)
+static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev, int* amount)
 {
 	snd_rawmidi_info_t *info;
 	const char *name;
@@ -126,11 +126,12 @@ static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev)
 			sprintf(dev->hw_string, "hw:%d,%d,%d", card, device, sub);
 			sprintf(dev->hw_name, "%s", sub_name);
 		}
+		*amount++;
 	}
 
 }
 
-static void list_card_devices(int card, dev_info_t **devs)
+static void list_card_devices(int card, dev_info_t **devs, int *amount)
 {
 	snd_ctl_t *ctl;
 	char name[32];
@@ -149,7 +150,7 @@ static void list_card_devices(int card, dev_info_t **devs)
 		}
 		if (device < 0)
 			break;
-		list_device(ctl, card, device, devs[device]);
+		list_device(ctl, card, device, devs[device], amount);
 	}
 	snd_ctl_close(ctl);
 }
@@ -159,7 +160,6 @@ static void list_card_devices(int card, dev_info_t **devs)
 static int device_list(dev_info_t** devs)
 {
 	int card, err, amount = 0;
-
 
 	card = -1;
 	if ((err = snd_card_next(&card)) < 0) {
@@ -172,12 +172,11 @@ static int device_list(dev_info_t** devs)
 	}
 	/*puts("Dir Device    Name");*/
 	do {
-		list_card_devices(card, devs);
+		list_card_devices(card, devs, &amount);
 		if ((err = snd_card_next(&card)) < 0) {
 			error("cannot determine card number: %s", snd_strerror(err));
 			break;
 		}
-        amount++;
         if (amount == 5) break;
 	} while (card >= 0);
     return amount;

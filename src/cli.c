@@ -72,7 +72,6 @@ int main(int argc, char *argv[]) {
     int location       = 0;               /* Preset or cab number */
     char path[256]     = "";              /* For file path. Forgive me security gods... */
     char devString[32] = { '\0', '\0' };  /* ALSA device string */
-
     int ret = 0;
     int opt = 0;
 

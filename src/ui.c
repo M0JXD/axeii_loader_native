@@ -28,7 +28,7 @@ static enum {
 } mode = SEND_MODE;
 
 static Ihandle *startbutton, *messagelabel, *progressbar;
-static char filepath[256], midiDevice[20];  /* Forgive me security gods */
+static char filepath[256], *midiDevice;  /* Forgive me security gods */
 static char properties = 0;
 static int location;
 
@@ -45,24 +45,29 @@ void progressCallback(int currentProgress) {
 
 /* Get MIDI devices using `amidi -l` */
 static void getMidiDevices(Ihandle *list) {
-    FILE *fp = popen("amidi -l", "r");
-    if (!fp) exit(-1);
-    char line[256];
-    int idx = 1;
-    while (fgets(line, sizeof(line), fp)) {
-        if (strstr(line, "Dir") || strstr(line, "Device")) continue;
-        char *dev = strstr(line, "hw:");
-        if (dev) {
-            IupSetAttributeId(list, "", idx, dev);
-            idx++;
+    dev_info_t **devs;
+    char buf[32];
+    int amount = 0, index = 0;
+    devs = get_axe_midi_devs(&amount, &index);
+
+    if (amount > 0) {
+        for (int i = 0; i < amount; i++) {
+            puts("HERE!!");
+            sprintf(buf, "%d", i);
+            IupSetAttribute(list, buf, devs[i]->hw_string);
+            if (i == 5) break;
         }
     }
-    pclose(fp);
-    if (idx == 1) IupSetAttributeId(list, "", 1, ""); /* at least one */
+
+    if (index > 0) {
+        sprintf(buf, "%d", index + 1);
+        IupSetAttribute(list, "VALUE", buf);
+    }
+    free_axe_midi_devs(devs);
 }
 
 static char detectAndEnable(char* filepath) {
-    if(midiDevice) {
+    if(midiDevice != NULL) {
         if (mode == SEND_MODE) {
             properties = detectFileProperties(filepath);
         } else if (mode == RECEIVE_MODE) {
@@ -75,13 +80,15 @@ static char detectAndEnable(char* filepath) {
 }
 
 static int setMode_cb(Ihandle* ih, int new_pos, int old_pos) {
+    (void)ih; (void)old_pos;
     mode = new_pos + 1;
     detectAndEnable(filepath);
     return IUP_DEFAULT;
 }
 
 
-static int openFile_cb(void) {
+static int openFile_cb(Ihandle* ih) {
+    (void)ih;
     if (IupGetFile(filepath) + 1) {
         IupSetAttribute(IupGetHandle("send_file"), "VALUE", filepath);
         detectAndEnable(filepath);
@@ -89,7 +96,8 @@ static int openFile_cb(void) {
     return IUP_DEFAULT;
 }
 
-static int openDir_cb(void) {
+static int openDir_cb(Ihandle* ih) {
+    (void)ih;
     Ihandle *dlg = IupFileDlg();
     IupSetAttribute(dlg, "DIALOGTYPE", "DIR");
     if (IupPopup(dlg, IUP_CENTER, IUP_CENTER) == IUP_NOERROR) {
@@ -101,14 +109,15 @@ static int openDir_cb(void) {
     return IUP_DEFAULT;
 }
 
-static int start_cb(void) {
-    char *midiDevice = IupGetAttribute(IupGetHandle("list_dev"), "VALUE");
-    int location = atoi(IupGetAttribute(IupGetHandle("send_loc"), "VALUE"));
+static int start_cb(Ihandle* ih) {
+    (void)ih;
+    midiDevice = IupGetAttribute(IupGetHandle("list_dev"), "VALUE");
+    location = atoi(IupGetAttribute(IupGetHandle("send_loc"), "VALUE"));
     IupSetAttribute(progressbar, "VALUE", "0");
 
     setupRawMIDIHandles("");
     if (mode == SEND_MODE) {
-        char prop = detectFileProperties(filepath);
+        properties = detectFileProperties(filepath);
         sendFile(filepath, properties, location);
     } else if (mode == RECEIVE_MODE) {
         /* TODO: Append a name to the path */
@@ -119,7 +128,8 @@ static int start_cb(void) {
     return IUP_DEFAULT;
 }
 
-static void show_notes_cb(void) {
+static int show_notes_cb(Ihandle* ih) {
+    (void)ih;
     Ihandle *note1 = IupLabel("Note 1: Preset location is ignored when sending to edit buffer.");
     Ihandle *note2 = IupLabel("Note 2: Scratchpad presets start at 101+ on MkII units.");
     Ihandle *note3 = IupLabel("Note 3: XL/XL+ usage is untested, please see README and send feedback!");
@@ -132,13 +142,14 @@ static void show_notes_cb(void) {
     IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=320x50, RESIZE=NO, MINBOX=NO");
     IupPopup(dlg, IUP_CENTER, IUP_CENTER);
     IupDestroy(dlg);
+    return IUP_DEFAULT;
 }
 
-static int exit_cb(void) { return IUP_CLOSE; }
+static int exit_cb(Ihandle* ih) { (void)ih; return IUP_CLOSE; }
 
 /* MAIN */
 int main(int argc, char **argv) {
-    Ihandle *dlg, *frame_1, *frame_2, *box_1, *box_2, *box_3,
+    Ihandle *dlg, *frame_1, *frame_2, *box_1, *box_2,
             *topmenu_1, *topmenu_2, *menu_1, *menu_2,
             *label_1, *label_2, *label_3,
             *entry_1, *entry_2, *entry_3,

@@ -2,3 +2,7 @@ lib/iup/*
 *.o
 axeiiloader
 axeiiloader-gui
+test_files/IRS/LT_MARV412_Mix 7.syx
+test_files/IRS/LT_MARV412_Mix9.syx
+test_files/IRS/short_mad_oak_basketweave_r121.syx
+test_files/PRESETS
