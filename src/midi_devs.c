@@ -58,7 +58,7 @@ static void error(const char *format, ...)
 	putc('\n', stderr);
 }
 
-static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev, int* amount)
+static int list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev)
 {
 	snd_rawmidi_info_t *info;
 	const char *name;
@@ -66,6 +66,7 @@ static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev, i
 	int subs, subs_in, subs_out;
 	int sub;
 	int err;
+	int amount = 0;
 
 	snd_rawmidi_info_alloca(&info);
 	snd_rawmidi_info_set_device(info, device);
@@ -86,7 +87,7 @@ static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev, i
 
 	subs = subs_in > subs_out ? subs_in : subs_out;
 	if (!subs)
-		return;
+		return 0;
 
 	for (sub = 0; sub < subs; ++sub) {
 		snd_rawmidi_info_set_stream(info, sub < subs_in ?
@@ -97,7 +98,7 @@ static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev, i
 		if (err < 0) {
 			error("cannot get rawmidi information %d:%d:%d: %s\n",
 			      card, device, sub, snd_strerror(err));
-			return;
+			return 0;
 		}
 
         /* At time of development, this is a bleeding edge (commit 2 days old!) change to filter inactive ports */
@@ -126,22 +127,23 @@ static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev, i
 			sprintf(dev->hw_string, "hw:%d,%d,%d", card, device, sub);
 			sprintf(dev->hw_name, "%s", sub_name);
 		}
-		(*amount)++;
+		amount++;
 	}
-
+	return amount;
 }
 
-static void list_card_devices(int card, dev_info_t **devs, int *amount)
+static int list_card_devices(int card, dev_info_t **devs)
 {
 	snd_ctl_t *ctl;
 	char name[32];
 	int device;
 	int err;
+	int amount = 0;
 
 	sprintf(name, "hw:%d", card);
 	if ((err = snd_ctl_open(&ctl, name, 0)) < 0) {
 		error("cannot open control for card %d: %s", card, snd_strerror(err));
-		return;
+		return 0;
 	}
 	device = -1;
 	for (;;) {
@@ -151,9 +153,10 @@ static void list_card_devices(int card, dev_info_t **devs, int *amount)
 		}
 		if (device < 0)
 			break;
-		list_device(ctl, card, device, devs[device], amount);
+		amount += list_device(ctl, card, device, devs[device]);
 	}
 	snd_ctl_close(ctl);
+	return amount;
 }
 
 
@@ -173,7 +176,7 @@ static int device_list(dev_info_t** devs)
 	}
 	/*puts("Dir Device    Name");*/
 	do {
-		list_card_devices(card, devs, &amount);
+		amount += list_card_devices(card, devs);
 		if ((err = snd_card_next(&card)) < 0) {
 			error("cannot determine card number: %s", snd_strerror(err));
 			break;
@@ -206,4 +209,5 @@ void free_axe_midi_devs(dev_info_t **devs)
 {
     free(devs[0]);
     free(devs);
+    devs = NULL;
 }
