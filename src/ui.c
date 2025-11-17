@@ -139,15 +139,14 @@ static int start_cb(Ihandle* ih) {
     }
     closeRawMIDIHandles();
 
-    /* TODO: Handle Errors */
     if (ret == FILE_ERROR) {
-        puts("Couldn't open file!");
+        IupSetAttribute(messagelabel, "TITLE", "Couldn't open file!");
     } else if (ret == DESTINATION_UNIT_INVALID) {
-        puts("Can't send XL/XL+ file to OG/MKII!");
+        IupSetAttribute(messagelabel, "TITLE", "Can't send XL/XL+ file to OG/MKII!");
     } else if (ret == HEADER_LOCK_ISSUE) {
-        puts("Couldn't lock onto header!");
+        IupSetAttribute(messagelabel, "TITLE", "Couldn't lock onto header!");
     } else if (ret == PROPERTIES_INVALID) {
-        puts("File and/or values are not valid!");
+        IupSetAttribute(messagelabel, "TITLE", "File and/or values are not valid!");
     }
 
     IupSetAttribute(ih, "ACTIVE", "YES");
