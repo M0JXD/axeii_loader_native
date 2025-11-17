@@ -29,9 +29,7 @@ build_dir/axeiiloader: build_dir/axeii_utils.o build_dir/midi_devs.o src/cli.c
 build_dir/axeiiloader-gui: build_dir/axeii_utils.o build_dir/midi_devs.o src/ui.c
 	gcc src/ui.c build_dir/axeii_utils.o build_dir/midi_devs.o -o build_dir/axeiiloader-gui \
 	-Wall -Werror -Wpedantic \
-	-I./lib/iup/include \
-	-L./lib/iup \
-	-Wl,-Bstatic -liup \
+	-I./lib/iup/include -L./lib/iup -Wl,-Bstatic -liup \
 	-Wl,-Bdynamic $(gtk3libs) -lasound -O2
 
 build_dir/axeii_utils.o: src/axeii_utils.c src/axeii_utils.h

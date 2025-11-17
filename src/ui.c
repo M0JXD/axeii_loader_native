@@ -141,10 +141,11 @@ static int start_cb(Ihandle* ih) {
         location = atoi(IupGetAttribute(IupGetHandle("recv_loc"), "VALUE"));
         if (strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset")) {
             properties = OG_PRESET;
+            strcat(filepath, "/received_preset.syx");
         } else {
             properties = OG_IR;
+            strcat(filepath, "/received_ir.syx");
         }
-        strcat(filepath, "/recced.syx");
         ret = getFile(filepath, properties, location);
     }
     closeRawMIDIHandles();
@@ -180,16 +181,16 @@ static int show_notes_cb(Ihandle* ih) {
     return IUP_DEFAULT;
 }
 
-static int exit_cb(Ihandle* ih) { (void)ih; return IUP_CLOSE; }
+/*static int exit_cb(Ihandle* ih) { (void)ih; return IUP_CLOSE; }*/
 
 /* MAIN */
 int main(int argc, char **argv) {
     Ihandle *dlg, *frame_1, *frame_2, *box_1, *box_2,
-            *topmenu_1, *topmenu_2, *menu_1, *menu_2,
             *label_1, *label_2, *label_3,
             *entry_1, *entry_2, *entry_3,
             *select_1, *select_2, *button_1,
-            *sendtab, *receivetab, *tabs;
+            *sendtab, *receivetab, *tabs,
+            *topmenu_1, *menu_1;
 
     IupOpen(&argc, &argv);
 
@@ -286,13 +287,10 @@ int main(int argc, char **argv) {
     IupSetAttributes(box_1, "GAP=10, MARGIN=6x6");
 
     /* MENU */
-    menu_1 = IupItem("Exit", NULL);
-    menu_2 = IupItem("Notes", NULL);
-    IupSetCallback(menu_1, "ACTION", (Icallback)exit_cb);
-    IupSetCallback(menu_2, "ACTION", (Icallback)show_notes_cb);
+    menu_1 = IupItem("Notes", NULL);
+    IupSetCallback(menu_1, "ACTION", (Icallback)show_notes_cb);
     topmenu_1 = IupMenu(menu_1, NULL);
-    topmenu_2 = IupMenu(menu_2, NULL);
-    menu_1 = IupMenu(IupSubmenu("File", topmenu_1), IupSubmenu("Help", topmenu_2), NULL);
+    menu_1 = IupMenu(IupSubmenu("Help", topmenu_1), NULL);
 
     /* DIALOG */
     dlg = IupDialog(box_1);
