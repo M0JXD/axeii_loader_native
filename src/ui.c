@@ -83,10 +83,12 @@ static char detectAndEnable() {
             }
         } else if (mode == RECEIVE_MODE) {
             strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
-            if (filepath[0] != ' ') properties = 1;
+            if (filepath[0] == '/') properties = 1;
         }
-        if (properties & IS_VALID)
+        if ((properties & IS_VALID) && (properties != FILE_ERROR))
             IupSetAttribute(startbutton, "ACTIVE", "YES");
+        else
+            IupSetAttribute(startbutton, "ACTIVE", "NO");
     }
     return 0;
 }
