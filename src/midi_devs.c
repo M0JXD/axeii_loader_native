@@ -138,6 +138,7 @@ static void list_card_devices(int card, dev_info_t **devs, int *amount)
 	int device;
 	int err;
 
+	sprintf(name, "hw:%d", card);
 	if ((err = snd_ctl_open(&ctl, name, 0)) < 0) {
 		error("cannot open control for card %d: %s", card, snd_strerror(err));
 		return;
@@ -182,7 +183,8 @@ static int device_list(dev_info_t** devs)
     return amount;
 }
 
-dev_info_t** get_axe_midi_devs(int *amount, int *axe_index) {
+dev_info_t** get_axe_midi_devs(int *amount, int *axe_index)
+{
     dev_info_t **devs;
     *axe_index = -1;
 
@@ -200,7 +202,8 @@ dev_info_t** get_axe_midi_devs(int *amount, int *axe_index) {
     return devs;
 }
 
-void free_axe_midi_devs(dev_info_t **devs) {
+void free_axe_midi_devs(dev_info_t **devs)
+{
     free(devs[0]);
     free(devs);
 }
