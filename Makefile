@@ -16,7 +16,7 @@
 
 gtk3libs := -lgtk-3 -lgdk-3 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -lglib-2.0 -lXext -lX11 -lm
 
-all: cli gui run
+all: cli gui
 
 cli: axeii_utils.o midi_devs.o src/cli.c
 	gcc src/cli.c axeii_utils.o midi_devs.o -o axeiiloader -Wall -Werror -Wextra -Wpedantic -lasound -O2
