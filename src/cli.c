@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
         if (mode == SEND) {
             puts("=== SEND MODE ===");
             properties = detectFileProperties(path);
-            if (properties <= 0) {
+            if (properties >= 0) {
                 printf("Detected a %s file for a %s\n", type, unit);
                 properties & IS_PRESET ? puts("Attempting to send to edit buffer...") :
                                          printf("Attempting to send to location %d...\n", location);
