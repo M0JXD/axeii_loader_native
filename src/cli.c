@@ -52,6 +52,7 @@ static void usage() {
 
 /* axeii_loader needs us to implement this */
 void progressCallback(int currentProgress) {
+    static int oldProgress = 0;
     if (currentProgress <= -1) {
         puts("Trying to lock onto header...");
     } else if (currentProgress == 0) {
@@ -60,8 +61,11 @@ void progressCallback(int currentProgress) {
     } else if (currentProgress == 100) {
         printf(" 100%%\n");
     } else {
-        printf(".");
-        fflush(stdout);
+        if (currentProgress > (oldProgress + 2)) {
+            printf(".");
+            fflush(stdout);
+            oldProgress = currentProgress;
+        }
     }
 }
 
