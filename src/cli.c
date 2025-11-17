@@ -50,6 +50,21 @@ static void usage() {
     puts("=== END OF HELP ===");
 }
 
+static char getDevice(char* devString) {
+    dev_info_t **devs;
+    int amount, index;
+    char ret = 0;
+    devs = get_axe_midi_devs(&amount, &index);
+
+    if (index >= 0) {
+        strcpy(devString, devs[index]->hw_string);
+    } else {
+        ret = -1;
+    }
+    free_axe_midi_devs(devs);
+    return ret;
+}
+
 /* axeii_loader needs us to implement this */
 void progressCallback(int currentProgress) {
     static int oldProgress = 0;
@@ -68,6 +83,8 @@ void progressCallback(int currentProgress) {
         }
     }
 }
+
+
 
 /* MAIN ENTRY */
 int main(int argc, char *argv[]) {
@@ -157,17 +174,24 @@ int main(int argc, char *argv[]) {
     /* Sanity checks */
     if (mode == 0) {
         puts("No options specified. Pass -h for help.");
-        ret = 1;
-    } else {
-        if (devString[0] == '\0') {
-            puts("No device specified. Please specify with -d option.");
-            ret = 1;
+        return 1;
+    }
+
+    /* Setup MIDI */
+    if (devString[0] == '\0') {
+        puts("No device specified. Attempting to autodetect...");
+        ret = getDevice(devString);
+        if (ret != 0) {
+            puts("Could not detect Axe-FX II. Please specify with -d option.");
+            return 1;
         } else {
-            if (setupRawMIDIHandles(devString) != 0) {
-                puts("Error opening MIDI device!");
-                ret = 1;
-            }
+            printf("Located an Axe-FX II at %s\n", devString);
         }
+    }
+
+    if (setupRawMIDIHandles(devString) != 0) {
+        puts("Error opening MIDI device!");
+        return 1;
     }
 
     /* Run actions */
