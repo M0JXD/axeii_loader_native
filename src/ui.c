@@ -42,6 +42,7 @@ void progressCallback(int currentProgress) {
     if (currentProgress == 100) {
         IupSetAttribute(messagelabel, "TITLE", "Transfer complete!");
     }
+    IupRedraw(progressbar, 1);
 }
 
 static void getMidiDevices(Ihandle *list) {
@@ -125,12 +126,13 @@ static int openDir_cb(Ihandle* ih) {
 
 static int start_cb(Ihandle* ih) {
     int location = 0, midiIndex;
-    char ret, properties, filepath[256];
+    char ret, properties, type, filepath[256];
     IupSetAttribute(ih, "ACTIVE", "NO");
     IupSetAttribute(progressbar, "VALUE", "0");
-
     midiIndex = atoi(IupGetAttribute(IupGetHandle("midi_dev"), "VALUE")) - 1;
+    type = atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1;
     ret = setupRawMIDIHandles(devs[midiIndex]->hw_string);
+
     if (mode == SEND_MODE) {
         strcpy(filepath, IupGetAttribute(IupGetHandle("send_file"), "VALUE"));
         properties = detectFileProperties(filepath);
@@ -140,10 +142,12 @@ static int start_cb(Ihandle* ih) {
         strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
         location = atoi(IupGetAttribute(IupGetHandle("recv_loc"), "VALUE"));
         if (strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset")) {
-            properties = OG_PRESET;
+            properties = !type ? OG_PRESET :
+                         (type == 1) ? XL_PRESET : XLP_PRESET;
             strcat(filepath, "/received_preset.syx");
         } else {
-            properties = OG_IR;
+            properties = !type ? OG_IR :
+                         (type == 1) ? XL_IR : XLP_IR;
             strcat(filepath, "/received_ir.syx");
         }
         ret = getFile(filepath, properties, location);
@@ -180,8 +184,6 @@ static int show_notes_cb(Ihandle* ih) {
     IupDestroy(dlg);
     return IUP_DEFAULT;
 }
-
-/*static int exit_cb(Ihandle* ih) { (void)ih; return IUP_CLOSE; }*/
 
 /* MAIN */
 int main(int argc, char **argv) {
@@ -237,12 +239,12 @@ int main(int argc, char **argv) {
     IupSetAttribute(sendtab, "TABTITLE", "SEND");
 
     /* RECEIVE TAB */
-    label_1 = IupLabel("Directory:");
-    label_2 = IupLabel("Location:");
-    label_3 = IupLabel("Type:");
-    entry_1 = IupText(NULL);
+    label_1  = IupLabel("Directory:");
+    label_2  = IupLabel("Location:");
+    label_3  = IupLabel("Type:");
+    entry_1  = IupText(NULL);
     button_1 = IupButton("Browse...", NULL);
-    entry_2 = IupText(NULL);
+    entry_2  = IupText(NULL);
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
     IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=384");
     IupSetHandle("recv_dir", entry_1);
