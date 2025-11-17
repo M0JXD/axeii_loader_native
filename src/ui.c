@@ -71,21 +71,21 @@ static char detectAndEnable() {
         if (mode == SEND_MODE) {
             strcpy(filepath, IupGetAttribute(IupGetHandle("send_file"), "VALUE"));
             properties = detectFileProperties(filepath);
-            if ((properties & IS_PRESET) && (properties & IS_VALID)) {
-                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "NO");
-                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "Preset File Detected");
-            } else if (properties & IS_VALID) {
-                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "YES");
-                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "IR File Detected");
-            } else {
+            if ((properties == FILE_ERROR) || !(properties & IS_VALID)) {
                 IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "NO");
                 IupSetAttribute(IupGetHandle("send_type"), "TITLE", "Type could not be detected");
+            } else if (properties & IS_PRESET) {
+                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "NO");
+                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "Preset File Detected");
+            } else {
+                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "YES");
+                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "IR File Detected");
             }
         } else if (mode == RECEIVE_MODE) {
             strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
             if (filepath[0] != ' ') properties = 1;
         }
-        if (properties)
+        if (properties & IS_VALID)
             IupSetAttribute(startbutton, "ACTIVE", "YES");
     }
     return 0;
@@ -163,7 +163,7 @@ static int start_cb(Ihandle* ih) {
 
 static int show_notes_cb(Ihandle* ih) {
     (void)ih;
-    Ihandle *note1 = IupLabel("Note 1: Preset location is ignored when sending to edit buffer.");
+    Ihandle *note1 = IupLabel("Note 1: Preset location is ignored when sending, as it's loaded to the edit buffer.");
     Ihandle *note2 = IupLabel("Note 2: Scratchpad presets start at 101+ on MkII units.");
     Ihandle *note3 = IupLabel("Note 3: XL/XL+ usage is untested, please see README and send feedback!");
     Ihandle *box   = IupVbox(
@@ -172,7 +172,7 @@ static int show_notes_cb(Ihandle* ih) {
         IupSetAttributes(note3, "EXPAND=HORIZONTAL"),
         NULL);
     Ihandle *dlg = IupDialog(box);
-    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=320x50, RESIZE=NO, MINBOX=NO");
+    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=350x50, RESIZE=NO, MINBOX=NO");
     IupPopup(dlg, IUP_CENTER, IUP_CENTER);
     IupDestroy(dlg);
     return IUP_DEFAULT;
