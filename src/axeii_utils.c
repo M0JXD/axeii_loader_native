@@ -213,6 +213,7 @@ static char sendPreset(char* pathToPreset, char properties) {
     }
 
     /* Refuse to send XL presets to OG */
+    /* TODO: Now properties is only for the file this check needs fixed */
     if ((properties & IS_OG) && endAddress == 12940) {
         return DESTINATION_UNIT_INVALID;
     }
