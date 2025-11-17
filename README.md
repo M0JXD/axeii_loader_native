@@ -95,8 +95,17 @@ Eavesdropping on FractalBot (via Wine) and the Axe-FX II is pretty easy with the
 
 ### AI Usage
 
-I want to be clear and transparent about my AI usage. Often I see projects that the developer claims is their own work, when in fact they merely prompted it into existence. I like programming and am hoping to become good enough to be employed doing it full time, so I want anyone reviewing my work to understand what I am actually capable of. Prior projects of mine (the Flutter version, the morse trainer) make very minimal usage of AI.
+I want to be clear and transparent about my AI usage. Often I see projects that the developer claims is their own work, when in fact they merely prompted it into existence. I like programming and am hoping to become good enough to be employed doing it full time, so I want anyone reviewing my work to understand what I am actually capable of. Prior projects of mine (the Flutter & old CLI version, the morse trainer etc.) make very minimal usage of AI.
 
 ChatGPT was used in the earlier stages of build the IUP GUI, but after it generated code with [the wrong attributes and even a syntax error](https://chatgpt.com/share/691b851f-0dc8-8001-83e1-f58034df940f) I completely lost faith in using the technology, and when reading back through the code found many places even a mediocre programmer like myself was able to improve (it often resorted to fixing sizes instead of using IUPs layout engine to it's advantage). Hence from the commit "Rewrite ChatGPT's dodgy layout code" I have done mostly everything myself, but even a Google search gives AI overviews these days.
 
 As oppose to a code generator I find AI useful as a suped up Google search (and occasionally it surprises me, e.g. I tried to build the UI on Windows and it worked out from the very unclear error message that the problem is that IUP's precompiled MinGW (MSVCRT) binaries don't work with the UCRT environment, which I simply could not find an answer to with Google), and I make a genuine effort to truly understand what it gives me.
+
+## Credits
+
+Thanks to:
+
+- Geert Bevin's very handy ReceiveMIDI tool - https://github.com/gbevin/ReceiveMIDI
+- The Wine contributors, which has let me run Fractal-Bot and Axe-Edit fairly well.
+- Fractal Audio for making the best modellers
+- The contributors to the Axe-FX Wiki's
