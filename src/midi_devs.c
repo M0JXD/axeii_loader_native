@@ -126,7 +126,7 @@ static void list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev, i
 			sprintf(dev->hw_string, "hw:%d,%d,%d", card, device, sub);
 			sprintf(dev->hw_name, "%s", sub_name);
 		}
-		*amount++;
+		(*amount)++;
 	}
 
 }
