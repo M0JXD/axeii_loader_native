@@ -15,6 +15,7 @@
  *    with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
+/*#include <stdio.h>*/
 #include <alsa/asoundlib.h>
 #include "axeii_utils.h"
 
@@ -63,19 +64,19 @@ char detectFileProperties(char* pathToPreset) {
 
     switch (buffer[4]) {
         case 0x03:
-            ret |= 0b00100;
+            ret |= 0x04;  /* 0b00100 */
         break;
 
         case 0x06:
-            ret |= 0b01000;
+            ret |= 0x08;  /* 0b01000 */
         break;
 
         case 0x07:
-            ret |= 0b10000;
+            ret |= 0x10;  /* 0b10000 */
         break;
 
         default:
-            ret &= 0b00010;
+            ret &= 0x02;  /* 0b00010 */
     }
     return ret;
 }
@@ -111,7 +112,7 @@ static void recalcSysex(char properties, unsigned char* buffer, int len) {
 }
 
 /* Internal function to calc the right command to send */
-static void calcReqCommand(char properties, int location, char* command, int len) {
+static void calcReqCommand(char properties, int location, unsigned char* command, int len) {
     /* HEADER BYTES */
     command[0] = 0xF0;
     command[1] = 0x00;
@@ -143,9 +144,9 @@ static void calcReqCommand(char properties, int location, char* command, int len
 }
 
 /* Internal function for when fetching from to lock on to the right header bytes */
-static char fetchUntilHeaderCorrect(char* buffer, char properties) {
+static char fetchUntilHeaderCorrect(unsigned char* buffer) {
     char ret = HEADER_LOCK_ISSUE;
-    char trys = 0;
+    char trys = -1;
 
     do {
         /* Flush any trailing messages */
@@ -165,7 +166,8 @@ static char fetchUntilHeaderCorrect(char* buffer, char properties) {
         /*    buffer[3], buffer[4], buffer[5]*/
         /*);*/
 
-        if ((buffer[0] == 0xF0) && (buffer[3] == 0x74) && buffer[5] == 0x7A) {
+        if ((buffer[0] == 0xF0) && (buffer[3] == 0x74) &&
+            (buffer[5] == 0x77 || buffer[5] == 0x7A)) {
             ret = 0;
             break;
         } else {
@@ -229,7 +231,7 @@ static char sendPreset(char* pathToPreset, char properties) {
         recalcSysex(properties, &buffer[12+(202 * i)], 202);
         snd_rawmidi_write(handleOut, &buffer[12+(202 * i)], 202);
         snd_rawmidi_drop(handleIn);
-        progressCallback((100 / dataMessages + 2) *  i);
+        progressCallback((100 / (dataMessages + 2)) *  i + 2);
     }
 
     /* Send end message */
@@ -248,9 +250,9 @@ static char getPreset(char* pathToSave, char properties, int location) {
     calcReqCommand(properties, location, command, 10);
 
     if (properties & IS_OG) {
-        readBackAmount = 12951;
-    } else {
         readBackAmount = 6487;
+    } else {
+        readBackAmount = 12951;
     }
 
     /* Axe-FX II sends midi tempo ticks. */
@@ -260,16 +262,16 @@ static char getPreset(char* pathToSave, char properties, int location) {
     /* Request a preset dump */
     snd_rawmidi_write(handleOut, command, 10);
 
-    ret = fetchUntilHeaderCorrect(buffer, properties);
+    ret = fetchUntilHeaderCorrect(buffer);
 
     if (ret == 0) {
         progressCallback(0);
         /* Grab everything else... */
         for (unsigned int i = 6; i < readBackAmount; i++) {
             snd_rawmidi_read(handleIn, &buffer[i], 1);
-            if ((i % 100) == 0) {
-                progressCallback((100 / readBackAmount + 1) *  i);
-            }
+            double prog = ((double)i / (double)readBackAmount) * 100;
+            if (prog > 1)
+                progressCallback((int)prog);
         }
         progressCallback(100);
 
@@ -347,7 +349,7 @@ static char getIR(char* pathToSave, char properties, int location) {
     /* Request a preset dump */
     snd_rawmidi_write(handleOut, command, 9);
 
-    ret = fetchUntilHeaderCorrect(buffer, properties);
+    ret = fetchUntilHeaderCorrect(buffer);
 
     if (ret == 0) {
         progressCallback(0);
