@@ -28,9 +28,7 @@ static enum {
 } mode = SEND_MODE;
 
 static Ihandle *startbutton, *messagelabel, *progressbar;
-static char filepath[256], *midiDevice;  /* Forgive me security gods */
-static char properties = 0;
-static int location;
+static dev_info_t **devs = NULL;
 
 void progressCallback(int currentProgress) {
     char valAsString[16];
@@ -38,40 +36,45 @@ void progressCallback(int currentProgress) {
     if (currentProgress >= 0) {
         IupSetAttribute(messagelabel, "TITLE", "Doing transfer...");
         IupSetAttribute(progressbar, "VALUE", valAsString);
-    } else {
+    } else if (currentProgress < 0) {
         IupSetAttribute(messagelabel, "TITLE", "Trying to capture header...");
+    }
+    if (currentProgress == 100) {
+        IupSetAttribute(messagelabel, "TITLE", "Transfer complete!");
     }
 }
 
 /* Get MIDI devices using `amidi -l` */
 static void getMidiDevices(Ihandle *list) {
-    dev_info_t **devs;
     char buf[32];
-    int amount = 0, index = 0;
+    int amount = -1, index = -1;
+    if (devs != NULL) free_axe_midi_devs(devs);
     devs = get_axe_midi_devs(&amount, &index);
 
-    if (amount > 0) {
+    if (amount >= 0) {
         for (int i = 0; i < amount; i++) {
-            puts("HERE!!");
-            sprintf(buf, "%d", i);
-            IupSetAttribute(list, buf, devs[i]->hw_string);
+            sprintf(buf, "%d", i + 1);
+            IupSetAttribute(list, buf, devs[i]->hw_name);
             if (i == 5) break;
         }
     }
 
-    if (index > 0) {
+    if (index >= 0) {
         sprintf(buf, "%d", index + 1);
         IupSetAttribute(list, "VALUE", buf);
     }
-    free_axe_midi_devs(devs);
 }
 
-static char detectAndEnable(char* filepath) {
-    if(midiDevice != NULL) {
+static char detectAndEnable() {
+    char properties = 0;
+    char filepath[256];
+    if(IupGetAttribute(IupGetHandle("midi_dev"), "VALUE") != NULL) {
         if (mode == SEND_MODE) {
+            strcpy(filepath, IupGetAttribute(IupGetHandle("send_file"), "VALUE"));
             properties = detectFileProperties(filepath);
         } else if (mode == RECEIVE_MODE) {
-            ;
+            strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
+            if (filepath[0] != ' ') properties = 1;
         }
         if (properties)
             IupSetAttribute(startbutton, "ACTIVE", "YES");
@@ -82,16 +85,17 @@ static char detectAndEnable(char* filepath) {
 static int setMode_cb(Ihandle* ih, int new_pos, int old_pos) {
     (void)ih; (void)old_pos;
     mode = new_pos + 1;
-    detectAndEnable(filepath);
+    detectAndEnable();
     return IUP_DEFAULT;
 }
 
 
 static int openFile_cb(Ihandle* ih) {
     (void)ih;
+    char filepath[256];
     if (IupGetFile(filepath) + 1) {
         IupSetAttribute(IupGetHandle("send_file"), "VALUE", filepath);
-        detectAndEnable(filepath);
+        detectAndEnable();
     }
     return IUP_DEFAULT;
 }
@@ -105,26 +109,48 @@ static int openDir_cb(Ihandle* ih) {
         if (dir) IupSetAttribute(IupGetHandle("recv_dir"), "VALUE", dir);
     }
     IupDestroy(dlg);
-    detectAndEnable(filepath);
+    detectAndEnable();
     return IUP_DEFAULT;
 }
 
 static int start_cb(Ihandle* ih) {
-    (void)ih;
-    midiDevice = IupGetAttribute(IupGetHandle("list_dev"), "VALUE");
-    location = atoi(IupGetAttribute(IupGetHandle("send_loc"), "VALUE"));
+    int location = 0, midiIndex;
+    char ret, properties, filepath[256];
+    IupSetAttribute(ih, "ACTIVE", "NO");
     IupSetAttribute(progressbar, "VALUE", "0");
 
-    setupRawMIDIHandles("");
+    midiIndex = atoi(IupGetAttribute(IupGetHandle("midi_dev"), "VALUE")) - 1;
+    ret = setupRawMIDIHandles(devs[midiIndex]->hw_string);
     if (mode == SEND_MODE) {
+        strcpy(filepath, IupGetAttribute(IupGetHandle("send_file"), "VALUE"));
         properties = detectFileProperties(filepath);
-        sendFile(filepath, properties, location);
+        location = atoi(IupGetAttribute(IupGetHandle("send_loc"), "VALUE"));
+        ret = sendFile(filepath, properties, location);
     } else if (mode == RECEIVE_MODE) {
-        /* TODO: Append a name to the path */
-        getFile(filepath, properties, location);
+        strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
+        location = atoi(IupGetAttribute(IupGetHandle("recv_loc"), "VALUE"));
+        if (strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset")) {
+            properties = OG_PRESET;
+        } else {
+            properties = OG_IR;
+        }
+        strcat(filepath, "/recced.syx");
+        ret = getFile(filepath, properties, location);
+    }
+    closeRawMIDIHandles();
+
+    /* TODO: Handle Errors */
+    if (ret == FILE_ERROR) {
+        puts("Couldn't open file!");
+    } else if (ret == DESTINATION_UNIT_INVALID) {
+        puts("Can't send XL/XL+ file to OG/MKII!");
+    } else if (ret == HEADER_LOCK_ISSUE) {
+        puts("Couldn't lock onto header!");
+    } else if (ret == PROPERTIES_INVALID) {
+        puts("File and/or values are not valid!");
     }
 
-    closeRawMIDIHandles();
+    IupSetAttribute(ih, "ACTIVE", "YES");
     return IUP_DEFAULT;
 }
 
@@ -166,8 +192,8 @@ int main(int argc, char **argv) {
 
     IupSetAttributes(entry_1, "DROPDOWN=YES, EXPAND=HORIZONTAL");
     IupSetAttributes(entry_2, "1=OG/MKII, 2=XL, 3=XL+, VALUE=1, DROPDOWN=YES, EXPAND=HORIZONTAL");
-    IupSetHandle("list_dev", entry_1);
-    IupSetHandle("list_type", entry_2);
+    IupSetHandle("midi_dev", entry_1);
+    IupSetHandle("axe_type", entry_2);
     getMidiDevices(entry_1);
 
     box_1 = IupGridBox(label_1, entry_1, label_2, entry_2, NULL);
@@ -211,6 +237,9 @@ int main(int argc, char **argv) {
     select_1 = IupSetAttributes(IupToggle("PRESET", NULL), "EXPAND=HORIZONTAL");
     select_2 = IupSetAttributes(IupToggle("IR", NULL), "EXPAND=HORIZONTAL");
     entry_3  = IupRadio(IupHbox(select_1, select_2, NULL));
+    IupSetHandle("preset", select_1);
+    IupSetHandle("ir", select_2);
+    IupSetHandle("type_opt", entry_3);
 
     receivetab = IupGridBox(label_1, entry_1, button_1,
                             label_2, entry_2, IupSpace(),
@@ -259,5 +288,6 @@ int main(int argc, char **argv) {
     IupShowXY(dlg, IUP_CENTER, IUP_CENTER);
     IupMainLoop();
     IupClose();
+    if (devs != NULL) free_axe_midi_devs(devs);
     return EXIT_SUCCESS;
 }
