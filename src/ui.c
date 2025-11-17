@@ -44,7 +44,6 @@ void progressCallback(int currentProgress) {
     }
 }
 
-/* Get MIDI devices using `amidi -l` */
 static void getMidiDevices(Ihandle *list) {
     char buf[32];
     int amount = -1, index = -1;
@@ -72,6 +71,16 @@ static char detectAndEnable() {
         if (mode == SEND_MODE) {
             strcpy(filepath, IupGetAttribute(IupGetHandle("send_file"), "VALUE"));
             properties = detectFileProperties(filepath);
+            if ((properties & IS_PRESET) && (properties & IS_VALID)) {
+                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "NO");
+                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "Preset File Detected");
+            } else if (properties & IS_VALID) {
+                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "YES");
+                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "IR File Detected");
+            } else {
+                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "NO");
+                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "Type could not be detected");
+            }
         } else if (mode == RECEIVE_MODE) {
             strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
             if (filepath[0] != ' ') properties = 1;
@@ -88,7 +97,6 @@ static int setMode_cb(Ihandle* ih, int new_pos, int old_pos) {
     detectAndEnable();
     return IUP_DEFAULT;
 }
-
 
 static int openFile_cb(Ihandle* ih) {
     (void)ih;
@@ -205,17 +213,22 @@ int main(int argc, char **argv) {
     /* SEND TAB */
     label_1  = IupLabel("File:");
     label_2  = IupLabel("Location:");
+    label_3  = IupLabel("Detected:");
     entry_1  = IupText(NULL);
     button_1 = IupButton("Browse...", NULL);
     entry_2  = IupText(NULL);
+    entry_3  = IupLabel("Type could not be detected");
 
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=384");
+    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=384, ACTIVE=NO");
     IupSetHandle("send_file", entry_1);
     IupSetHandle("send_loc", entry_2);
+    IupSetHandle("send_type", entry_3);
     IupSetCallback(button_1, "ACTION", (Icallback)openFile_cb);
 
-    sendtab = IupGridBox(label_1, entry_1, button_1, label_2, entry_2, IupSpace(), NULL);
+    sendtab = IupGridBox(label_1, entry_1, button_1,
+                         label_2, entry_2, IupSpace(),
+                         label_3, entry_3, IupSpace(), NULL);
     IupSetAttributes(sendtab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
                               "GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3, CMARGIN=5x5");
     IupSetAttribute(sendtab, "TABTITLE", "SEND");
