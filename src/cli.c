@@ -37,7 +37,8 @@ static void printTenBytes(char *command) {
 
 static void usage() {
     puts("=== Axe-FX II Loader Help Text ===");
-    puts("-d and either -i or -o with a file name must be provided. You can't provide both -i and -o.");
+    puts("Either -i or -o with a file name must be provided. You can't provide both -i and -o.");
+    puts("If the -d option is not given it will try to autodetect from up to the first five available devices.")
     puts("");
     puts("=== Options ===");
     puts("-d <device>      ALSA device string. Use 'amidi -l' and pass the \"Device\", e.g. \"hw:2,0\".");
@@ -83,8 +84,6 @@ void progressCallback(int currentProgress) {
         }
     }
 }
-
-
 
 /* MAIN ENTRY */
 int main(int argc, char *argv[]) {
