@@ -20,10 +20,11 @@
 #include "axeii_utils.h"
 
 /* GLOBALS */
-static snd_rawmidi_t *handleIn = 0, *handleOut = 0;
+static snd_rawmidi_t *handleIn, *handleOut;
 
 /* FUNCTIONS */
 char setupRawMIDIHandles(char* devString) {
+    /* TODO: This call leaks? */
     char err = snd_rawmidi_open(&handleIn, &handleOut, devString, 0);
     if (err != 0) {
         return 1;
@@ -323,7 +324,7 @@ static char sendIR(char* pathToIR, char properties, int location) {
         recalcSysex(properties, &buffer[irInfoStart+(170 * i)], 170);
         snd_rawmidi_write(handleOut, &buffer[irInfoStart+(170 * i)], 170);
         snd_rawmidi_drop(handleIn);
-        progressCallback((100 / 66) * i);
+        progressCallback((100 / 66) * (i + 1));
     }
 
     /* Send end message */
