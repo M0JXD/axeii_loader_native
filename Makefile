@@ -50,6 +50,7 @@ cli-tcc:
 clean:
 	rm -r build_dir
 
+# Run various test scenarios
 run:
 	# Send a preset to the edit buffer
 	#./build_dir/axeiiloader -i test_files/presets/og/BulbRhythmPatch_og.syx
@@ -57,14 +58,21 @@ run:
 	# Get a preset from position 150
 	#./build_dir/axeiiloader -o obtained_preset.syx -p 150
 
-	# Send an IR to position 69
+	# Send an short (OG captured) IR to position 68
+	#./build_dir/axeiiloader -i test_files/irs/short_mad_oak_basketweave_r121.syx -p 68
+
+	# Send a long (XL/XL+ captured) IR to position 69
 	#./build_dir/axeiiloader -i test_files/irs/LT_MARV412_Mix_9.syx -p 69
 
 	# Get an IR from position 70
 	#./build_dir/axeiiloader -o obtained_ir.syx -m -p 70
 
-	# Clear preset 151 and IR 69
+	# Try to send an XL preset to an OG (should fail)
+	#./build_dir/axeiiloader -i test_files/presets/xl/MarkDay90sEVHSolo_xl.syx
+
+	# Clear preset 151 and IRs 68/69
 	#./build_dir/axeiiloader -o assets/empty_preset.syx -p 151
+	#./build_dir/axeiiloader -i assets/empty_ir.syx -p 68
 	#./build_dir/axeiiloader -i assets/empty_ir.syx -p 69
 
 	# Run the GUI version
