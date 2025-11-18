@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
 
         if (mode == SEND) {
             puts("=== SEND MODE ===");
-            properties = detectFileProperties(path);
+            properties = detectFileProperties(path) | (properties & CLEAR_FILE);
             if (properties & IS_VALID) {
                 char* unit = properties & IS_OG_FILE ? "OG/MKII" :
                              properties & IS_XL_FILE ? "XL" : "XL Plus";

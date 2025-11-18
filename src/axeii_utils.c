@@ -290,8 +290,6 @@ static char sendIR(char* pathToIR, unsigned char properties, int location) {
     FILE *file = fopen(pathToIR, "r");
     if (file == NULL) return FILE_ERROR;
 
-    puts("HERE2");
-
     if (properties & IS_OG_FILE) {
         irInfoStart = 11;
         endAddress = 10891;

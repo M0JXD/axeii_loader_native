@@ -43,10 +43,10 @@
 #define IS_OG_FILE  0x04  /* 0b00000100 */
 #define IS_XL_FILE  0x08  /* 0b00001000 */
 #define IS_XLP_FILE 0x10  /* 0b00010000 */
-#define CLEAR_FILE  0xE3  /* 0b11100011 */
 #define IS_OG_UNIT  0x20  /* 0b00100000 */
 #define IS_XL_UNIT  0x40  /* 0b01000000 */
 #define IS_XLP_UNIT 0x80  /* 0b10000000 */
+#define CLEAR_FILE  0xE0  /* 0b11100000 */
 #define CLEAR_UNIT  0x1F  /* 0b00011111 */
 
 /* ENUMS */

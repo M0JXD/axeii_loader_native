@@ -128,29 +128,35 @@ static int openDir_cb(Ihandle* ih) {
 
 static int start_cb(Ihandle* ih) {
     int location = 0, midiIndex;
-    char ret, properties, type, filepath[256];
+    char ret, properties = 0, filepath[256];
     IupSetAttribute(ih, "ACTIVE", "NO");
     IupSetAttribute(progressbar, "VALUE", "0");
     midiIndex = atoi(IupGetAttribute(IupGetHandle("midi_dev"), "VALUE")) - 1;
-    type = atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1;
     ret = setupRawMIDIHandles(devs[midiIndex]->hw_string);
+
+    switch (atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1) {
+        case 1:
+            properties |= IS_XL_UNIT;
+        break;
+        case 2:
+            properties |= IS_XLP_UNIT;
+        break;
+        default:
+            properties |= IS_OG_UNIT;
+    }
 
     IupSetAttribute(messagelabel, "TITLE", "Starting Transfer...");
     if (mode == SEND_MODE) {
         strcpy(filepath, IupGetAttribute(IupGetHandle("send_file"), "VALUE"));
-        properties = detectFileProperties(filepath);
+        properties = detectFileProperties(filepath) | (properties & CLEAR_FILE);
         location = atoi(IupGetAttribute(IupGetHandle("send_loc"), "VALUE"));
         ret = sendFile(filepath, properties, location);
     } else if (mode == RECEIVE_MODE) {
         strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
         location = atoi(IupGetAttribute(IupGetHandle("recv_loc"), "VALUE"));
         if (strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset")) {
-            properties = !type ? OG_PRESET :
-                         (type == 1) ? XL_PRESET : XLP_PRESET;
             strcat(filepath, "/received_preset.syx");
         } else {
-            properties = !type ? OG_IR :
-                         (type == 1) ? XL_IR : XLP_IR;
             strcat(filepath, "/received_ir.syx");
         }
         ret = getFile(filepath, properties, location);
