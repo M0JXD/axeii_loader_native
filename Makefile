@@ -51,8 +51,21 @@ clean:
 	rm -r build_dir
 
 run:
-	#./build_dir/axeiiloader -i test_files/PRESETS/OG/BulbRhythmPatch_og.syx
-	#./build_dir/axeiiloader -i test_files/IRS/LT_MARV412_Mix9.syx
-	#./build_dir/axeiiloader -o preset.syx
-	#./build_dir/axeiiloader -o ir.syx -m
-	./build_dir/axeiiloader-gui
+	# Send a preset to the edit buffer
+	#./build_dir/axeiiloader -i test_files/presets/og/BulbRhythmPatch_og.syx
+
+	# Get a preset from position 150
+	#./build_dir/axeiiloader -o obtained_preset.syx -p 150
+
+	# Send an IR to position 69
+	#./build_dir/axeiiloader -i test_files/irs/LT_MARV412_Mix_9.syx -p 69
+
+	# Get an IR from position 70
+	#./build_dir/axeiiloader -o obtained_ir.syx -m -p 70
+
+	# Clear preset 151 and IR 69
+	#./build_dir/axeiiloader -o assets/empty_preset.syx -p 151
+	#./build_dir/axeiiloader -i assets/empty_ir.syx -p 69
+
+	# Run the GUI version
+	#./build_dir/axeiiloader-gui
