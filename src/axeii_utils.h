@@ -37,7 +37,7 @@
 
 /* MASKS */
 #define IS_VALID   0x01  /* 0b00001 */
-#define IS_IR      0x01  /* 0b00001 */  /* Same as valid check */
+/* #define IS_IR   0x00 */ /* 0b00000 */  /* Don't use! */
 #define IS_PRESET  0x02  /* 0b00010 */
 #define IS_OG      0x04  /* 0b00100 */
 #define IS_XL      0x08  /* 0b01000 */

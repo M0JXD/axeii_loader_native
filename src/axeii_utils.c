@@ -23,6 +23,15 @@
 static snd_rawmidi_t *handleIn, *handleOut;
 
 /* FUNCTIONS */
+
+/* Handy Util */ /*
+static void printTenBytes(unsigned char *command) {
+    printf("Bytes are: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n",
+            command[0], command[1], command[2], command[3], command[4],
+            command[5], command[6], command[7], command[8], command[9]
+          );
+} */
+
 char setupRawMIDIHandles(char* devString) {
     /* TODO: This call leaks? */
     char err = snd_rawmidi_open(&handleIn, &handleOut, devString, 0);
@@ -121,14 +130,8 @@ static void calcReqCommand(char properties, int location, unsigned char* command
     command[3] = 0x74;
 
     /* TODO: How does all this work for XL/XL+? */
-    if (properties & IS_IR) {
-        command[5] = 0x7A;  /* IR Dump Req ID */
-        command[6] = location - 1;
-        command[7] = 0x0;
-        command[8] = 0x10;
-    } else if (properties & IS_PRESET) {
+    if (properties & IS_PRESET) {
         command[5] = 0x03;  /* Patch Dump Req ID */
-
         /* Banks and preset number */
         if (location < 128) {
             command[6] = 0x00;
@@ -140,6 +143,11 @@ static void calcReqCommand(char properties, int location, unsigned char* command
             command[6] = 0x02;
             command[7] = location - 256;
         }
+    } else if (properties & IS_VALID) {
+        command[5] = 0x7A;  /* IR Dump Req ID */
+        command[6] = location - 1;
+        command[7] = 0x0;
+        command[8] = 0x10;
     }
     recalcSysex(properties, command, len);
 }
@@ -148,7 +156,7 @@ static void calcReqCommand(char properties, int location, unsigned char* command
 static char fetchUntilHeaderCorrect(unsigned char* buffer) {
     char ret = HEADER_LOCK_ISSUE;
     char trys = -1;
-
+    buffer[0] = 0;
     do {
         /* Flush any trailing messages */
         while (buffer[0] != 0xF0) {
@@ -166,7 +174,6 @@ static char fetchUntilHeaderCorrect(unsigned char* buffer) {
         /*    buffer[0], buffer[1], buffer[2],*/
         /*    buffer[3], buffer[4], buffer[5]*/
         /*);*/
-
         if ((buffer[0] == 0xF0) && (buffer[3] == 0x74) &&
             (buffer[5] == 0x77 || buffer[5] == 0x7A)) {
             ret = 0;
@@ -174,14 +181,14 @@ static char fetchUntilHeaderCorrect(unsigned char* buffer) {
         } else {
             /* Discard wrong packet */
             snd_rawmidi_drop(handleIn);
-            /* TODO: Make this work and only read more as needed on the next loop */
+            /* TODO: Allow tempo to be runnning. Only read more as needed on the next loop */
             /* Maybe another 0xF0 has already been read, move everything over */
-            for (int nextF0 = 1; nextF0 < 6; nextF0++) {
-                if (buffer[nextF0] == 0xF0) {
-                    memmove(buffer, &buffer[nextF0], 6 - nextF0);
-                }
-            }
-            buffer[0] = 10;
+            /*for (int nextF0 = 1; nextF0 < 6; nextF0++) {*/
+            /*    if (buffer[nextF0] == 0xF0) {*/
+            /*        memmove(buffer, &buffer[nextF0], 6 - nextF0);*/
+            /*    }*/
+            /*}*/
+            buffer[0] = 0;
         }
         trys--;
         progressCallback(trys);
@@ -263,7 +270,6 @@ static char getPreset(char* pathToSave, char properties, int location) {
 
     /* Request a preset dump */
     snd_rawmidi_write(handleOut, command, 10);
-
     ret = fetchUntilHeaderCorrect(buffer);
 
     if (ret == 0) {
@@ -382,7 +388,7 @@ char sendFile(char* pathToFile, char properties, int location) {
     if (properties & IS_PRESET) {
         (void)location;
         ret = sendPreset(pathToFile, properties);
-    } else if (properties & IS_IR) {
+    } else if (properties & IS_VALID) {
         ret = sendIR(pathToFile, properties, location);
     } else {
         ret = PROPERTIES_INVALID;
@@ -394,7 +400,7 @@ char getFile(char* pathToSave, char properties, int location) {
     char ret = 0;
     if (properties & IS_PRESET) {
         ret = getPreset(pathToSave, properties, location);
-    } else if (properties & IS_IR) {
+    } else if (properties & IS_VALID) {
         ret = getIR(pathToSave, properties, location);
     } else {
         ret = PROPERTIES_INVALID;
