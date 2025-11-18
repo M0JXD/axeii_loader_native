@@ -1,5 +1,5 @@
 lib/iup/*
-*.o
-*.syx
-axeiiloader
-axeiiloader-gui
+build_dir/*
+test_files/*
+obtained_preset.syx
+obtained_ir.syx
