@@ -26,15 +26,6 @@
 enum modes { SEND = 1, RECEIVE };
 
 /* FUNCTIONS */
-
-/* Handy Util */ /*
-static void printTenBytes(char *command) {
-    printf("Bytes are: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n",
-            command[0], command[1], command[2], command[3], command[4],
-            command[5], command[6], command[7], command[8], command[9]
-          );
-} */
-
 static void usage() {
     puts("=== Axe-FX II Loader Help Text ===");
     puts("Either -i or -o with a file name must be provided. You can't provide both -i and -o.");
