@@ -1,0 +1,136 @@
+# AXE-FX II MIDI NOTES
+
+General notes as I debugged/reversed engineered sending/loading presets and IRs to the Axe-FX II MkII.
+
+## MIDI BEATS
+The Axe-FX sends regular tempo beats of the form:
+F0 00 01 74 03 10 F7
+
+## PRESETS
+
+An Original/MkII preset consists of 34 sysex messages; 1 start message, 32 data ones and 1 end message.
+They are 6487 bytes in total. (NB: Each byte measurement is F0 to F7 inclusive)
+
+- The start message is 12 bytes
+- Each data message is 202 bytes
+- The end message is 11 bytes
+
+XL and XL+ presets are a bit different. Same format, but they have 64 data messages (66 total).
+So 12951 bytes total. To clarify:
+
+- The start message is still 12 bytes
+- Each data message is still 202 bytes
+- The end message is still 11 bytes
+
+### SENDING PRESETS
+
+On the send side, it's just the file. It seems after each syx message in the file there is one message received.
+For the Brian may preset I received in return for each sysex in the file:
+
+F0 00 01 74 03 64 77 00 15 F7
+F0 00 01 74 03 64 78 00 1A F7
+F0 00 01 74 03 64 78 00 1A F7
+... ditto response packets ...
+F0 00 01 74 03 64 78 00 1A F7
+F0 00 01 74 03 64 79 00 1B F7
+F0 00 01 74 03 14 00 20 32 F7
+
+64 is the ID for a multipurpose response.
+After the 64, the 77, 78 or 79 indicates the type of "packet" it received. (Start, data or end packet)
+"00" is the error byte (no errors here!).
+And the last byte is the checksum.
+14 is a get preset number response.
+
+### GETTING PRESETS
+
+This command was sent for getting preset 24:
+F0 00 01 74 03 03 00 18 1D F7
+
+Which returned:
+
+F0 00 01 74 03 77 7F 00 00 10 1E F7
+... data packets ...
+F0 00 01 74 03 79 79 1C 00 1A F7
+
+Which is the same as the sysex file that it saved.
+
+Requests sent for other numbers:
+
+000: F0 00 01 74 03 03 00 00 05 F7
+100: F0 00 01 74 03 03 00 64 61 F7
+127: F0 00 01 74 03 03 00 7F 7A F7
+128: F0 00 01 74 03 03 01 00 04 F7
+200: F0 00 01 74 03 03 01 48 4C F7
+255: F0 00 01 74 03 03 01 7F 7B F7
+256: F0 00 01 74 03 03 02 00 07 F7
+300: F0 00 01 74 03 03 02 2C 2B F7
+383: F0 00 01 74 03 03 02 7F 78 F7
+
+So it's bank and then number.
+
+## IRs
+
+An IR consists of 66 messages, 1 start message, 64 data ones and 1 end message.
+IRs from OG/MkII are 10904 bytes, but XL/XL+ are 10905.
+There's an extra byte in the start packet (presumably to designate the extra slots)
+
+- The start message is 11 or 12 bytes depending on whether it was captured on an original or XL
+- Each data message is 170 bytes (F0 to F7 inclusive)
+- The end message is 13 bytes
+
+Note the cab I sent was captured from an XL+, as the 5th byte is 0x07.
+Fractal bot changes the device byte and recalculates the checksum for each sysex message.
+
+If you send the command bytes from the start of the IR sysex file without calculating a location,
+(provided it's the right unit type of course), then it loads into the currently selected cabinet slot for your preset.
+To check: does this works without redoing the device byte and checksums for the connected unit?
+
+Start message:
+7th byte is the location (or location - 1 in hex, as 0x59 is for 90)
+IDK how it works with the XL/XLP. Presumably the next byte helps?
+IDK what the 0x10 is for yet either
+
+### Sending IRs
+
+FractalBot to Axe, sending LT_MIX_9 to cab 90:
+
+F0 00 01 74 03 7A 59 00 10 35 F7
+... data packets ...
+F0 00 01 74 03 7C 08 2C 20 06 0E 76 F7
+
+In return from the Axe-FX (this is the same case as the how the preset ones respond):
+F0 00 01 74 03 64 7A 00 18 F7
+... some response packets ...
+F0 00 01 74 03 64 7B 00 19 F7
+F0 00 01 74 03 10 F7  (So we get MIDI pulses still...)
+F0 00 01 74 03 64 7B 00 19 F7
+F0 00 01 74 03 64 7B 00 19 F7
+... more response packets ...
+F0 00 01 74 03 64 7B 00 19 F7
+F0 00 01 74 03 64 7C 00 1E F7
+
+Sending LT_MIX_9 to cab Location 91:
+
+F0 00 01 74 03 7A 5A 00 10 36 F7
+... data packets ...
+F0 00 01 74 03 7C 08 2C 20 06 0E 76 F7
+
+Sending to Scratch 1:
+F0 00 01 74 03 7A 64 00 10 08 F7
+
+Sending to Scratch 4:
+F0 00 01 74 03 7A 67 00 10 0B F7
+
+Well that's boring :( they're just the numbers after 100
+IDK how it'll work on the XL/XL+, I suppose the scratch locations just move to the end again?
+
+
+### Getting IRs
+
+To get Cab 1 on Mk1/2:
+F0 00 01 74 03 19 00 1F F7
+
+To get Cab 50 on Mk1/2:
+F0 00 01 74 03 19 31 2E F7
+
+Okay that's obvious too. But how does it work with the XL??
