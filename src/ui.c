@@ -42,7 +42,6 @@ void progressCallback(int currentProgress) {
     if (currentProgress == 100) {
         IupSetAttribute(messagelabel, "TITLE", "Transfer complete!");
     }
-    IupRedraw(progressbar, 1);
 }
 
 static void getMidiDevices(Ihandle *list) {
@@ -97,6 +96,7 @@ static char detectAndEnable() {
 static int setMode_cb(Ihandle* ih, int new_pos, int old_pos) {
     (void)ih; (void)old_pos;
     mode = new_pos + 1;
+    IupSetAttribute(progressbar, "VALUE", "0");
     detectAndEnable();
     return IUP_DEFAULT;
 }
@@ -104,6 +104,7 @@ static int setMode_cb(Ihandle* ih, int new_pos, int old_pos) {
 static int openFile_cb(Ihandle* ih) {
     (void)ih;
     char filepath[256];
+    IupSetAttribute(progressbar, "VALUE", "0");
     if (IupGetFile(filepath) + 1) {
         IupSetAttribute(IupGetHandle("send_file"), "VALUE", filepath);
         detectAndEnable();
@@ -113,6 +114,7 @@ static int openFile_cb(Ihandle* ih) {
 
 static int openDir_cb(Ihandle* ih) {
     (void)ih;
+    IupSetAttribute(progressbar, "VALUE", "0");
     Ihandle *dlg = IupFileDlg();
     IupSetAttribute(dlg, "DIALOGTYPE", "DIR");
     if (IupPopup(dlg, IUP_CENTER, IUP_CENTER) == IUP_NOERROR) {
@@ -133,6 +135,7 @@ static int start_cb(Ihandle* ih) {
     type = atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1;
     ret = setupRawMIDIHandles(devs[midiIndex]->hw_string);
 
+    IupSetAttribute(messagelabel, "TITLE", "Starting Transfer...");
     if (mode == SEND_MODE) {
         strcpy(filepath, IupGetAttribute(IupGetHandle("send_file"), "VALUE"));
         properties = detectFileProperties(filepath);

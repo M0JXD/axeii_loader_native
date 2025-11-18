@@ -331,7 +331,9 @@ static char sendIR(char* pathToIR, char properties, int location) {
         recalcSysex(properties, &buffer[irInfoStart+(170 * i)], 170);
         snd_rawmidi_write(handleOut, &buffer[irInfoStart+(170 * i)], 170);
         snd_rawmidi_drop(handleIn);
-        progressCallback((100 / 66) * (i + 1));
+        double prog = ((double)i / (double)66.0) * 100;
+        if (prog > 1)
+            progressCallback((int)prog);
     }
 
     /* Send end message */
@@ -364,9 +366,10 @@ static char getIR(char* pathToSave, char properties, int location) {
         /* Grab everything else... */
         for (int i = 6; i < lengthOfFile; i++) {
             snd_rawmidi_read(handleIn, &buffer[i], 1);
-            if ((i % 200) == 0) {
-                progressCallback((100 / lengthOfFile) * i);
-            }
+            double prog = ((double)i / (double)lengthOfFile) * 100;
+            if (prog > 1)
+                progressCallback((int)prog);
+
         }
         progressCallback(100);
 
