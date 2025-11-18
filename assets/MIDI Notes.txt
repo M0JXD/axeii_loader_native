@@ -84,6 +84,7 @@ Fractal bot changes the device byte and recalculates the checksum for each sysex
 If you send the command bytes from the start of the IR sysex file without calculating a location,
 (provided it's the right unit type of course), then it loads into the currently selected cabinet slot for your preset.
 To check: does this works without redoing the device byte and checksums for the connected unit?
+I've found if you resize a XL IR's start message but don't change the type it doesn't work. Be careful
 
 Start message:
 7th byte is the location (or location - 1 in hex, as 0x59 is for 90)
