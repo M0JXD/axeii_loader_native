@@ -179,16 +179,20 @@ static int start_cb(Ihandle* ih) {
 
 static int show_notes_cb(Ihandle* ih) {
     (void)ih;
-    Ihandle *note1 = IupLabel("Note 1: Preset location is ignored when sending, as it's loaded to the edit buffer.");
+    Ihandle *note1 = IupLabel("Note 1: Preset location is unrequired for sending, as it's loaded to the edit buffer.");
     Ihandle *note2 = IupLabel("Note 2: Scratchpad presets start at 101+ on MkII units.");
-    Ihandle *note3 = IupLabel("Note 3: XL/XL+ usage is untested, please see README and send feedback!");
+    Ihandle *note3 = IupLabel("Note 3: Please select the correct unit, or transfers may fail. Unit type is not autodetected.");
+    Ihandle *note4 = IupLabel("Note 4: Only up to the first five MIDI devices are checked and listed.");
+    Ihandle *note5 = IupLabel("Note 5: XL/XL+ usage is untested, please see README and send feedback!");
     Ihandle *box   = IupVbox(
         IupSetAttributes(note1, "EXPAND=HORIZONTAL"),
         IupSetAttributes(note2, "EXPAND=HORIZONTAL"),
         IupSetAttributes(note3, "EXPAND=HORIZONTAL"),
+        IupSetAttributes(note4, "EXPAND=HORIZONTAL"),
+        IupSetAttributes(note5, "EXPAND=HORIZONTAL"),
         NULL);
     Ihandle *dlg = IupDialog(box);
-    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=350x50, RESIZE=NO, MINBOX=NO");
+    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=360x60, RESIZE=NO, MINBOX=NO");
     IupPopup(dlg, IUP_CENTER, IUP_CENTER);
     IupDestroy(dlg);
     return IUP_DEFAULT;

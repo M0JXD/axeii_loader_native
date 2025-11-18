@@ -16,8 +16,8 @@
  */
 
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include "axeii_utils.h"
 #include "midi_devs.h"
@@ -30,6 +30,7 @@ static void usage() {
     puts("=== Axe-FX II Loader Help Text ===");
     puts("Either -i or -o with a file name must be provided. You can't provide both -i and -o.");
     puts("If the -d option is not given it will try to autodetect from up to the first five available devices.");
+    puts("The unit type (-t option) does not autodetect, and transfers may fail if it's incorrect.");
     puts("");
     puts("=== Options ===");
     puts("-d <device>      ALSA device string. Use 'amidi -l' and pass the \"Device\", e.g. \"hw:2,0\".");
@@ -37,7 +38,7 @@ static void usage() {
     puts("-o <file name>   Set output (receive mode) file.");
     puts("-m               Set to get IRs in receive mode (ignored for send mode).");
     puts("-p <integer>     Set Preset or IR location, defaults to 0. Ignored when sending presets as they're loaded to the edit buffer.");
-    puts("-t <o/x/p>       Set connected unit as Original/MKII (o), XL (x) or XL Plus (p) type unit. Defaults to Original/MkII." );
+    puts("-t <o/x/p>       Set connected unit as Original/MKII (o), XL (x) or XL Plus (p). Defaults to Original/MKII." );
     puts("-h               Show this help text.");
     puts("=== END OF HELP ===");
 }
