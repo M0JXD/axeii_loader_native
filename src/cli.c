@@ -78,11 +78,11 @@ void progressCallback(int currentProgress) {
 
 /* MAIN ENTRY */
 int main(int argc, char *argv[]) {
-    char properties    = OG_PRESET;       /* See the defines in axeii_loader.h */
-    char mode          = 0;               /* See enum modes */
-    int location       = 0;               /* Preset or cab number */
-    char path[256]     = "";              /* For file path. Forgive me security gods... */
-    char devString[32] = { '\0', '\0' };  /* ALSA device string */
+    unsigned char properties = OG_PRESET | IS_OG_UNIT; /* See the defines in axeii_loader.h */
+    char mode          = 0;                      /* See enum modes */
+    int location       = 0;                      /* Preset or cab number */
+    char path[256]     = "";                     /* Forgive me security gods... */
+    char devString[32] = { '\0', '\0' };         /* ALSA device string */
     int ret = 0;
     int opt = 0;
 
@@ -127,21 +127,19 @@ int main(int argc, char *argv[]) {
             break;
 
             case 't':
+                properties &= CLEAR_UNIT;
                 switch (optarg[0]) {
                     default:
                     case 'o':
-                        properties &= 0x03;  /* 0b00011 */
-                        properties |= IS_OG;
+                        properties |= IS_OG_UNIT;
                         puts("Axe-FX Type set to OG/MkII");
                     break;
                     case 'x':
-                        properties &= 0x03;  /* 0b00011 */
-                        properties |= IS_XL;
+                        properties |= IS_XL_UNIT;
                         puts("Axe-FX Type set to XL");
                     break;
                     case 'p':
-                        properties &= 0x03;  /* 0b00011 */
-                        properties |= IS_XLP;
+                        properties |= IS_XLP_UNIT;
                         puts("Axe-FX Type set to XL Plus");
                     break;
 
@@ -187,13 +185,13 @@ int main(int argc, char *argv[]) {
     /* Run actions */
     if (ret == 0) {
         char* type = properties & IS_PRESET ? "Preset" : "IR";
-        char* unit = properties & IS_OG ? "OG/MKII" :
-                          properties & IS_XL ? "XL" : "XL Plus";
 
         if (mode == SEND) {
             puts("=== SEND MODE ===");
             properties = detectFileProperties(path);
-            if (properties >= 0) {
+            if (properties & IS_VALID) {
+                char* unit = properties & IS_OG_FILE ? "OG/MKII" :
+                             properties & IS_XL_FILE ? "XL" : "XL Plus";
                 printf("Detected a %s file for a %s\n", type, unit);
                 properties & IS_PRESET ? puts("Attempting to send to edit buffer...") :
                                          printf("Attempting to send to location %d...\n", location);
@@ -201,6 +199,8 @@ int main(int argc, char *argv[]) {
             ret = sendFile(path, properties, location);
         } else if (mode == RECEIVE) {
             puts("=== RECEIVE MODE ===");
+            char* unit = properties & IS_OG_UNIT ? "OG/MKII" :
+                         properties & IS_XL_UNIT ? "XL" : "XL Plus";
             printf("Attempting to get a %s file from a %s from location %d...\n", type, unit, location);
             ret = getFile(path, properties, location);
         }

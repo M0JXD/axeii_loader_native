@@ -92,23 +92,14 @@ char detectFileProperties(char* pathToPreset) {
 }
 
 /* Internal function to recalc sysex on the fly */
-static void recalcSysex(char properties, unsigned char* buffer, int len) {
+static void recalcSysex(unsigned char properties, unsigned char* buffer, int len) {
     int checksumByte = 0xF0;
-
-    /* We only care for the type */
-    properties &= 0x1C;  /* 0b11100 */
-    switch (properties) {
-        case IS_XL:
-            buffer[4] = 0x06;
-        break;
-
-        case IS_XLP:
-            buffer[4] = 0x07;
-        break;
-
-        default:
-            buffer[4] = 0x03;
-        break;
+    if (properties & IS_XL_UNIT) {
+        buffer[4] = 0x06;
+    } else if (properties & IS_XLP_UNIT) {
+        buffer[4] = 0x07;
+    } else {
+        buffer[4] = 0x03;
     }
 
     /* Add checksum and sysex end byte */
@@ -122,7 +113,7 @@ static void recalcSysex(char properties, unsigned char* buffer, int len) {
 }
 
 /* Internal function to calc the right command to send */
-static void calcReqCommand(char properties, int location, unsigned char* command, int len) {
+static void calcReqCommand(unsigned char properties, int location, unsigned char* command, int len) {
     /* HEADER BYTES */
     command[0] = 0xF0;
     command[1] = 0x00;
@@ -196,7 +187,7 @@ static char fetchUntilHeaderCorrect(unsigned char* buffer) {
     return ret;
 }
 
-static char sendPreset(char* pathToPreset, char properties) {
+static char sendPreset(char* pathToPreset, unsigned char properties) {
     int read;
     char dataMessages;
     unsigned int endAddress;
@@ -204,7 +195,7 @@ static char sendPreset(char* pathToPreset, char properties) {
     FILE * file = fopen(pathToPreset, "r");
     if (file == NULL) return FILE_ERROR;
 
-    if (properties & IS_OG) {
+    if (properties & IS_OG_FILE) {
         dataMessages = 32;
         endAddress = 6476;
         read = fread(buffer, sizeof(char), 6487, file);
@@ -220,8 +211,7 @@ static char sendPreset(char* pathToPreset, char properties) {
     }
 
     /* Refuse to send XL presets to OG */
-    /* TODO: Now properties is only for the file this check needs fixed */
-    if ((properties & IS_OG) && endAddress == 12940) {
+    if ((properties & IS_OG_UNIT) && endAddress > 6488) {
         return DESTINATION_UNIT_INVALID;
     }
 
@@ -251,14 +241,14 @@ static char sendPreset(char* pathToPreset, char properties) {
     return 0;
 }
 
-static char getPreset(char* pathToSave, char properties, int location) {
+static char getPreset(char* pathToSave, unsigned char properties, int location) {
     char ret;
     unsigned char command[10];
     unsigned char buffer[12951];
     unsigned int readBackAmount;
     calcReqCommand(properties, location, command, 10);
 
-    if (properties & IS_OG) {
+    if (properties & IS_OG_UNIT) {
         readBackAmount = 6487;
     } else {
         readBackAmount = 12951;
@@ -292,7 +282,7 @@ static char getPreset(char* pathToSave, char properties, int location) {
     return ret;
 }
 
-static char sendIR(char* pathToIR, char properties, int location) {
+static char sendIR(char* pathToIR, unsigned char properties, int location) {
     char irInfoStart;
     unsigned int endAddress;
     unsigned char buffer[10905];
@@ -300,7 +290,9 @@ static char sendIR(char* pathToIR, char properties, int location) {
     FILE *file = fopen(pathToIR, "r");
     if (file == NULL) return FILE_ERROR;
 
-    if (properties & IS_OG) {
+    puts("HERE2");
+
+    if (properties & IS_OG_FILE) {
         irInfoStart = 11;
         endAddress = 10891;
         read = fread(buffer, sizeof(char), 10904, file);
@@ -344,11 +336,11 @@ static char sendIR(char* pathToIR, char properties, int location) {
     return 0;
 }
 
-static char getIR(char* pathToSave, char properties, int location) {
+static char getIR(char* pathToSave, unsigned char properties, int location) {
     char ret;
     unsigned char command[9] = { 0xF0, 0x00, 0x01, 0x74, 0x03, 0x19, 0x00, 0x1F, 0xF7 };
     unsigned char buffer[10905];
-    const int lengthOfFile = properties & IS_OG ? 10904 : 10905;
+    const int lengthOfFile = properties & IS_OG_UNIT ? 10904 : 10905;
     command[6] = location - 1;
     recalcSysex(properties, command, 9);
 
@@ -376,17 +368,13 @@ static char getIR(char* pathToSave, char properties, int location) {
         /* Save the IR */
         FILE * file = fopen(pathToSave, "wb");
         if (file == NULL) return FILE_ERROR;
-        if (properties & IS_OG) {
-            fwrite(buffer, sizeof(unsigned char), 10904, file);
-        } else {
-            fwrite(buffer, sizeof(unsigned char), 10905, file);
-        }
+        fwrite(buffer, sizeof(unsigned char), lengthOfFile, file);
         fclose(file);
     }
     return ret;
 }
 
-char sendFile(char* pathToFile, char properties, int location) {
+char sendFile(char* pathToFile, unsigned char properties, int location) {
     char ret = 0;
     if (properties & IS_PRESET) {
         (void)location;
@@ -399,7 +387,7 @@ char sendFile(char* pathToFile, char properties, int location) {
     return ret;
 }
 
-char getFile(char* pathToSave, char properties, int location) {
+char getFile(char* pathToSave, unsigned char properties, int location) {
     char ret = 0;
     if (properties & IS_PRESET) {
         ret = getPreset(pathToSave, properties, location);

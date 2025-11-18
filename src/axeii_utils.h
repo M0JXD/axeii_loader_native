@@ -19,29 +19,35 @@
 #define AXEII_UTILS_H
 
 /* DEFINES */
-/* File Properties */
-
+/* Transfer Properties */
 /* From LSB to MSB, the bits represent:
  * 0: True for valid file
  * 1: True for preset file, false for IR file
- * 2: Is OG/MkII file
- * 3: Is XL file
- * 4: Is XL+ file
+ * 2: File is OG/MkII
+ * 3: File is XL
+ * 4: File is XL+
+ * 5: Unit is OG/MkII
+ * 6: Unit is XL
+ * 7: Unit is XL+
  */
-#define OG_IR      0x05  /* 0b00101 */
-#define OG_PRESET  0x07  /* 0b00111 */
-#define XL_IR      0x09  /* 0b01001 */
-#define XL_PRESET  0x0B  /* 0b01011 */
-#define XLP_IR     0x11  /* 0b10001 */
-#define XLP_PRESET 0x13  /* 0b10011 */
+#define OG_IR      0x05  /* 0b00000101 */
+#define OG_PRESET  0x07  /* 0b00000111 */
+#define XL_IR      0x09  /* 0b00001001 */
+#define XL_PRESET  0x0B  /* 0b00001011 */
+#define XLP_IR     0x11  /* 0b00010001 */
+#define XLP_PRESET 0x13  /* 0b00010011 */
 
 /* MASKS */
-#define IS_VALID   0x01  /* 0b00001 */
-/* #define IS_IR   0x00 */ /* 0b00000 */  /* Don't use! */
-#define IS_PRESET  0x02  /* 0b00010 */
-#define IS_OG      0x04  /* 0b00100 */
-#define IS_XL      0x08  /* 0b01000 */
-#define IS_XLP     0x10  /* 0b10000 */
+#define IS_VALID    0x01  /* 0b00000001 */
+#define IS_PRESET   0x02  /* 0b00000010 */  /* If not preset and valid, must be IR */
+#define IS_OG_FILE  0x04  /* 0b00000100 */
+#define IS_XL_FILE  0x08  /* 0b00001000 */
+#define IS_XLP_FILE 0x10  /* 0b00010000 */
+#define CLEAR_FILE  0xE3  /* 0b11100011 */
+#define IS_OG_UNIT  0x20  /* 0b00100000 */
+#define IS_XL_UNIT  0x40  /* 0b01000000 */
+#define IS_XLP_UNIT 0x80  /* 0b10000000 */
+#define CLEAR_UNIT  0x1F  /* 0b00011111 */
 
 /* ENUMS */
 enum errors {
@@ -72,19 +78,19 @@ char detectFileProperties(char* pathToPreset);
 
 /** Send a file of the given properties to a location
  * @param char* pathToFile Path to the file to send
- * @param char properties Properties of the file specified
+ * @param unsigned char properties Properties of the file specified
  * @param int location Axe-FX II location to send to (ignored if sending preset)
  * @return char 0 on success, or error code
  */
-char sendFile(char* pathToFile, char properties, int location);
+char sendFile(char* pathToFile, unsigned char properties, int location);
 
 /** Get a file of the given properties from a location
  * @param char* pathToSave Path to save the obtained .syx file
- * @param char properties Properties of the unit and file wanted
+ * @param unsigned char properties Properties of the unit and file wanted
  * @param int location Axe-FX II location to get from
  * @return char 0 on success, or error code
  */
-char getFile(char* pathToSave, char properties, int location);
+char getFile(char* pathToSave, unsigned char properties, int location);
 
 /** User implemented function to allow the library to provide transaction progress
  * @param int currentProgress the current progress of the library, from 0 to 100. Negative numbers are passed for header locking.
