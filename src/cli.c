@@ -80,10 +80,10 @@ void progressCallback(int currentProgress) {
 /* MAIN ENTRY */
 int main(int argc, char *argv[]) {
     unsigned char properties = OG_PRESET | IS_OG_UNIT; /* See the defines in axeii_loader.h */
-    char mode          = 0;                      /* See enum modes */
-    int location       = 0;                      /* Preset or cab number */
-    char path[256]     = "";                     /* Forgive me security gods... */
-    char devString[32] = { '\0', '\0' };         /* ALSA device string */
+    char mode                = 0;                      /* See enum modes */
+    int location             = 0;                      /* Preset or cab number */
+    char path[256]           = "";                     /* Forgive me security gods... */
+    char devString[32]       = { '\0', '\0' };         /* ALSA device string */
     int ret = 0;
     int opt = 0;
 
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 
             /* Set IR receive mode */
             case 'm':
-                properties &= 0x1D;  /* 0b11101 */
+                properties &= SET_IR;
             break;
 
             /* Preset or IR number */

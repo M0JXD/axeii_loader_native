@@ -22,7 +22,7 @@
 /* Transfer Properties */
 /* From LSB to MSB, the bits represent:
  * 0: True for valid file
- * 1: True for preset file, false for IR file
+ * 1: True for preset file, false for IR file (used for both send and receive)
  * 2: File is OG/MkII
  * 3: File is XL
  * 4: File is XL+
@@ -48,6 +48,7 @@
 #define IS_XLP_UNIT 0x80  /* 0b10000000 */
 #define CLEAR_FILE  0xE0  /* 0b11100000 */
 #define CLEAR_UNIT  0x1F  /* 0b00011111 */
+#define SET_IR      0xFD  /* 0b11111101 */
 
 /* ENUMS */
 enum errors {
