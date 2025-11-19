@@ -110,5 +110,4 @@ Thanks to:
 
 - Geert Bevin's very handy ReceiveMIDI tool - https://github.com/gbevin/ReceiveMIDI
 - The Wine contributors, which has let me run Fractal-Bot and Axe-Edit fairly well.
-- Fractal Audio for making the best modellers
 - The contributors to the Axe-FX Wiki's
