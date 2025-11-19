@@ -16,7 +16,11 @@
 
 gtk3libs := -lgtk-3 -lgdk-3 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -lglib-2.0 -lXext -lX11 -lm
 
-all: build_dir build_dir/axeiiloader build_dir/axeiiloader-gui
+all: cli gui
+
+cli: build_dir build_dir/axeiiloader
+
+gui: build_dir build_dir/axeiiloader-gui
 
 # TODO: Download IUP to lib
 build_dir:
