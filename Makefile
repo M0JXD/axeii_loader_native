@@ -41,11 +41,11 @@ build_dir/midi_devs.o: src/midi_devs.c src/midi_devs.h
 	gcc -c src/midi_devs.c -o build_dir/midi_devs.o \
 	-Wall -Werror -Wextra -Wpedantic -lasound -O2
 
-cli-tcc:
+cli-tcc: build_dir
 	# Build the CLI version with TCC bc why not? You should start clean for this!
 	tcc -c src/axeii_utils.c -o build_dir/axeii_utils.o
 	tcc -c src/midi_devs.c -o build_dir/midi_devs.o
-	tcc src/cli.c build_dir/axeii_utils.o build_dir/midi_devs.o -o axeiiloader -Wall -lasound
+	tcc src/cli.c build_dir/axeii_utils.o build_dir/midi_devs.o -o build_dir/axeiiloader -Wall -lasound
 
 clean:
 	rm -r build_dir
