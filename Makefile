@@ -49,30 +49,40 @@ cli-tcc:
 
 clean:
 	rm -r build_dir
+	rm obtained_preset.syx obtained_ir.syx
 
 # Run various test scenarios
 run:
 	# Send a preset to the edit buffer
-	#./build_dir/axeiiloader -i test_files/presets/og/BulbRhythmPatch_og.syx
-
+	./build_dir/axeiiloader -i test_files/presets/og/BulbRhythmPatch_og.syx
+	@echo -e "\n"
+	@sleep 1
 	# Get a preset from position 150
-	#./build_dir/axeiiloader -o obtained_preset.syx -p 150
-
+	./build_dir/axeiiloader -o obtained_preset.syx -p 150
+	@echo -e "\n"
+	@sleep 1
 	# Send an short (OG captured) IR to position 68
-	#./build_dir/axeiiloader -i test_files/irs/short_mad_oak_basketweave_r121.syx -p 68
-
+	./build_dir/axeiiloader -i test_files/irs/short_mad_oak_basketweave_r121.syx -p 68
+	@echo -e "\n"
+	@sleep 1
 	# Send a long (XL/XL+ captured) IR to position 69
-	#./build_dir/axeiiloader -i test_files/irs/LT_MARV412_Mix_9.syx -p 69
-
+	./build_dir/axeiiloader -i test_files/irs/LT_MARV412_Mix_9.syx -p 69
+	@echo -e "\n"
+	@sleep 1
 	# Get an IR from position 70
-	#./build_dir/axeiiloader -o obtained_ir.syx -m -p 70
-
+	./build_dir/axeiiloader -o obtained_ir.syx -m -p 70
+	@echo -e "\n"
+	@sleep 1
 	# Try to send an XL preset to an OG (should fail)
-	#./build_dir/axeiiloader -i test_files/presets/xl/MarkDay90sEVHSolo_xl.syx
-
+	-./build_dir/axeiiloader -i test_files/presets/xl/MarkDay90sEVHSolo_xl.syx
+	@echo -e "\n"
+	@sleep 1
 	# Clear IRs 68/69
-	#./build_dir/axeiiloader -i assets/empty_ir.syx -p 68
-	#./build_dir/axeiiloader -i assets/empty_ir.syx -p 69
-
+	./build_dir/axeiiloader -i assets/empty_ir.syx -p 68
+	@echo -e "\n"
+	@sleep 1
+	./build_dir/axeiiloader -i assets/empty_ir.syx -p 69
+	@echo -e "\n"
+	@sleep 1
 	# Run the GUI version
-	#./build_dir/axeiiloader-gui
+	./build_dir/axeiiloader-gui

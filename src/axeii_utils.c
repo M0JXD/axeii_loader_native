@@ -146,7 +146,7 @@ static void calcReqCommand(unsigned char properties, int location, unsigned char
 /* Internal function for when fetching from to lock on to the right header bytes */
 static char fetchUntilHeaderCorrect(unsigned char* buffer) {
     char ret = HEADER_LOCK_ISSUE;
-    char trys = -1;
+    int trys = -1;
     buffer[0] = 0;
     do {
         /* Flush any trailing messages */
@@ -161,14 +161,19 @@ static char fetchUntilHeaderCorrect(unsigned char* buffer) {
         snd_rawmidi_read(handleIn, &buffer[4], 1);
         snd_rawmidi_read(handleIn, &buffer[5], 1);
         /* Was handy for debugging, note stdio is not included */
-        /*printf("Read header bytes are: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n",*/
-        /*    buffer[0], buffer[1], buffer[2],*/
-        /*    buffer[3], buffer[4], buffer[5]*/
-        /*);*/
+        /*printf("Read header bytes are: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n",
+            buffer[0], buffer[1], buffer[2],
+            buffer[3], buffer[4], buffer[5]
+        );*/
         if ((buffer[0] == 0xF0) && (buffer[3] == 0x74) &&
             (buffer[5] == 0x77 || buffer[5] == 0x7A)) {
             ret = 0;
             break;
+        } else if (buffer[5] == 0x64) {
+            /* The utility is really fast, so the response messages are not alway fully dropped from previous runs */
+            snd_rawmidi_drop(handleIn);
+            buffer[0] = 0;
+            continue;
         } else {
             /* Discard wrong packet */
             snd_rawmidi_drop(handleIn);
@@ -183,7 +188,7 @@ static char fetchUntilHeaderCorrect(unsigned char* buffer) {
         }
         trys--;
         progressCallback(trys);
-    } while (trys > -10);
+    } while (trys > -20);
     return ret;
 }
 
@@ -279,6 +284,7 @@ static char getPreset(char* pathToSave, unsigned char properties, int location) 
         fwrite(buffer, sizeof(unsigned char), 6487, file);
         fclose(file);
     }
+    snd_rawmidi_drop(handleIn);
     return ret;
 }
 
@@ -312,10 +318,10 @@ static char sendIR(char* pathToIR, unsigned char properties, int location) {
     snd_rawmidi_drop(handleIn);
 
     /* Inform we're sending an IR dump */
-    progressCallback(0);
     snd_rawmidi_write(handleOut, command, 11);
     snd_rawmidi_drop(handleIn);
 
+    progressCallback(0);
     /* Send data messages */
     for (int i = 0; i < 64; i++) {
         recalcSysex(properties, &buffer[irInfoStart+(170 * i)], 170);
@@ -345,6 +351,7 @@ static char getIR(char* pathToSave, unsigned char properties, int location) {
     /* Axe-FX II sends midi tempo ticks. */
     /* Incase the buffer has them, force it to clear */
     snd_rawmidi_drop(handleIn);
+    snd_rawmidi_drop(handleOut);
 
     /* Request a preset dump */
     snd_rawmidi_write(handleOut, command, 9);
@@ -369,6 +376,7 @@ static char getIR(char* pathToSave, unsigned char properties, int location) {
         fwrite(buffer, sizeof(unsigned char), lengthOfFile, file);
         fclose(file);
     }
+    snd_rawmidi_drop(handleIn);
     return ret;
 }
 
@@ -382,6 +390,7 @@ char sendFile(char* pathToFile, unsigned char properties, int location) {
     } else {
         ret = PROPERTIES_INVALID;
     }
+    snd_rawmidi_drop(handleIn);
     return ret;
 }
 
@@ -394,5 +403,6 @@ char getFile(char* pathToSave, unsigned char properties, int location) {
     } else {
         ret = PROPERTIES_INVALID;
     }
+    snd_rawmidi_drop(handleIn);
     return ret;
 }
