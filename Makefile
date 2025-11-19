@@ -77,7 +77,10 @@ run:
 	-./build_dir/axeiiloader -i test_files/presets/xl/MarkDay90sEVHSolo_xl.syx
 	@echo -e "\n"
 	@sleep 1
-	# Clear IRs 68/69
+	# Clear edit buffer and IRs 68/69
+	./build_dir/axeiiloader -i assets/empty_preset.syx
+	@echo -e "\n"
+	@sleep 1
 	./build_dir/axeiiloader -i assets/empty_ir.syx -p 68
 	@echo -e "\n"
 	@sleep 1
