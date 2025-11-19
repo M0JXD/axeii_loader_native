@@ -49,7 +49,7 @@ cli-tcc:
 
 clean:
 	rm -r build_dir
-	rm obtained_preset.syx obtained_ir.syx
+	rm received_preset.syx received_ir.syx
 
 # Run various test scenarios
 run:
@@ -58,7 +58,7 @@ run:
 	@echo -e "\n"
 	@sleep 1
 	# Get a preset from position 150
-	./build_dir/axeiiloader -o obtained_preset.syx -p 150
+	./build_dir/axeiiloader -o received_preset.syx -p 150
 	@echo -e "\n"
 	@sleep 1
 	# Send an short (OG captured) IR to position 68
@@ -70,7 +70,7 @@ run:
 	@echo -e "\n"
 	@sleep 1
 	# Get an IR from position 70
-	./build_dir/axeiiloader -o obtained_ir.syx -m -p 70
+	./build_dir/axeiiloader -o received_ir.syx -m -p 70
 	@echo -e "\n"
 	@sleep 1
 	# Try to send an XL preset to an OG (should fail)

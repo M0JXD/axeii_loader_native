@@ -154,9 +154,13 @@ static int start_cb(Ihandle* ih) {
     } else if (mode == RECEIVE_MODE) {
         strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
         location = atoi(IupGetAttribute(IupGetHandle("recv_loc"), "VALUE"));
+
+        properties |= IS_VALID;
         if (strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset")) {
+            properties |= IS_PRESET;
             strcat(filepath, "/received_preset.syx");
         } else {
+            properties &= SET_IR;
             strcat(filepath, "/received_ir.syx");
         }
         ret = getFile(filepath, properties, location);

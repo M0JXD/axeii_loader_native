@@ -1,5 +1,5 @@
 lib/iup/*
 build_dir/*
 test_files/*
-obtained_preset.syx
-obtained_ir.syx
+received_preset.syx
+received_ir.syx
