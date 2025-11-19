@@ -21,7 +21,7 @@
 /* DEFINES */
 /* Transfer Properties */
 /* From LSB to MSB, the bits represent:
- * 0: True for valid file
+ * 0: True for valid file  (must be set for receive mode to run)
  * 1: True for preset file, false for IR file (used for both send and receive)
  * 2: File is OG/MkII
  * 3: File is XL
