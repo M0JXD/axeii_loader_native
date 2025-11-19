@@ -27,8 +27,8 @@ static enum {
     RECEIVE_MODE
 } mode = SEND_MODE;
 
-static Ihandle *startbutton, *messagelabel, *progressbar;
 static dev_info_t **devs = NULL;
+static Ihandle *startbutton, *messagelabel, *progressbar;
 
 void progressCallback(int currentProgress) {
     char valAsString[16];
