@@ -37,7 +37,7 @@ build_dir/axeiiloader-gui: build_dir/axeii_utils.o build_dir/midi_devs.o src/ui.
 	-Wl,-Bdynamic $(gtk3libs) -lasound -O2
 
 build_dir/axeii_utils.o: src/axeii_utils.c src/axeii_utils.h
-	# gcc O2 optimisations mess up calculating the sysex checksum.
+	# GCC -O2 optimisations mess up calculating the sysex checksum.
 	gcc -c src/axeii_utils.c -o build_dir/axeii_utils.o \
 	-Wall -Werror -Wextra -Wpedantic -lasound -O1
 
