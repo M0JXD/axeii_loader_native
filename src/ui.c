@@ -314,7 +314,7 @@ int main(int argc, char **argv) {
 
     /* DIALOG */
     dlg = IupDialog(box_1);
-    IupSetAttributes(dlg, "TITLE=\"AXE-FX II LOADER\", MAXSIZE=350x500, RESIZE=NO");
+    IupSetAttributes(dlg, "TITLE=\"AXE-FX II LOADER\", MAXSIZE=420x500, RESIZE=NO");
     IupSetAttributeHandle(dlg, "MENU", menu_1);
 
     IupShowXY(dlg, IUP_CENTER, IUP_CENTER);
