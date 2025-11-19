@@ -42,6 +42,7 @@ void progressCallback(int currentProgress) {
     if (currentProgress == 100) {
         IupSetAttribute(messagelabel, "TITLE", "Transfer complete!");
     }
+    IupFlush();
 }
 
 static void getMidiDevices(Ihandle *list) {
