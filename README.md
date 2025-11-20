@@ -6,7 +6,7 @@ You do not need the CLI app to use the GUI app, they are completely separate but
 This is created for two reasons:
 
 - To learn about native UI libraries (in this case IUP) as I want to make and contribute to "truly native" apps.
-- I previously made a [GUI version of this utility in Flutter](https://github.com/M0JXD/axeii_loader), but at the moment the FlutterMidiCommand package it uses for the back-end has bugs on Linux. However I want to keep that version "as is" with the package (instead of replacing it with a FFI back-end), as there is the option of easily porting to other platforms in the future should the MIDI package be picked up and maintained again. Flutter continues to be my primary GUI library choice, and the Flutter version can still considered maintained and used instead.
+- I previously made a [GUI version of this utility in Flutter](https://github.com/M0JXD/axeii_loader), but at the moment the FlutterMidiCommand package it uses for the back-end has bugs on Linux. However I want to keep that version "as is" with the package (instead of replacing it with a FFI back-end), as there is the option of easily porting to other platforms in the future should the MIDI package be picked up and maintained again.
 
 ## CLI usage
 
