@@ -66,7 +66,7 @@ Requests sent for other numbers:
 300: F0 00 01 74 03 03 02 2C 2B F7
 383: F0 00 01 74 03 03 02 7F 78 F7
 
-So it's bank and then number.
+So it's bank and then number. How does this work on an XL?
 
 ## IRs
 
@@ -89,7 +89,7 @@ I've found if you resize a XL IR's start message but don't change the type it do
 Start message:
 7th byte is the location (or location - 1 in hex, as 0x59 is for 90)
 IDK how it works with the XL/XLP. Presumably the next byte helps?
-IDK what the 0x10 is for yet either
+IDK what the 0x10 is for yet either.
 
 ### Sending IRs
 
