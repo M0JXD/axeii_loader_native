@@ -303,7 +303,7 @@ static char sendIR(char* pathToIR, unsigned char properties, int location) {
     } else {
         irInfoStart = 12;
         endAddress = 10892;
-        read = fread(buffer, sizeof(char), 10904, file);
+        read = fread(buffer, sizeof(char), 10905, file);
     }
     fclose(file);
     if (read < 10904) {
@@ -353,7 +353,7 @@ static char getIR(char* pathToSave, unsigned char properties, int location) {
     snd_rawmidi_drop(handleIn);
     snd_rawmidi_drop(handleOut);
 
-    /* Request a preset dump */
+    /* Request a IR dump */
     snd_rawmidi_write(handleOut, command, 9);
 
     ret = fetchUntilHeaderCorrect(buffer);
