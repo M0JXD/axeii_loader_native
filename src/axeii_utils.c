@@ -91,6 +91,41 @@ char detectFileProperties(char* pathToPreset) {
     return ret;
 }
 
+/* Internal function to get a timestamp for saving */
+static const char* getTimeStamp(void) {
+    static char timeStamp[32];
+    time_t t = time(NULL);
+    strftime(timeStamp, sizeof(timeStamp),
+            "_%H:%M,%d-%m-%y", localtime(&t));
+    return timeStamp;
+}
+
+/* Internal function to get a preset's name from the raw byte data */
+static const char* getPresetName(unsigned char* presetData) {
+    static char presetName[64];
+    /* Name starts at address 1A, skip two bytes, 1D.. until 0x74 */
+    for (int i = 0x1D, k = 0; i < 0x74; i += 0x03, k++) {
+        presetName[k] = presetData[i];
+    }
+
+    /* Terminate after first non space character from the end */
+    for (int i = 32; i <= 0; i--) {
+        if (presetName[i] != 0x20) {
+            presetName[i + 1] = '\0';
+        }
+    }
+    presetName[31] = '\0';
+
+    /* Replace all spaces with underscores */
+    for (int i = 0; i < 32; i++) {
+        if (presetName[i] == ' ')
+            presetName[i] = '_';
+    }
+
+    strcat(presetName, getTimeStamp());
+    return presetName;
+}
+
 /* Internal function to recalc sysex on the fly */
 static void recalcSysex(unsigned char properties, unsigned char* buffer, int len) {
     int checksumByte = 0xF0;
@@ -279,7 +314,11 @@ static char getPreset(char* pathToSave, unsigned char properties, int location) 
         progressCallback(100);
 
         /* Save the preset */
-        FILE * file = fopen(pathToSave, "wb");
+        /* TODO: Check if we're passed a file or directory so we know whether to append the name*/
+        const char *name = getPresetName(buffer);
+        strcat(pathToSave, name);
+
+        FILE *file = fopen(pathToSave, "wb");
         if (file == NULL) return FILE_ERROR;
         fwrite(buffer, sizeof(unsigned char), readBackAmount, file);
         fclose(file);
