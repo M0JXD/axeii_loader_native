@@ -281,7 +281,7 @@ static char getPreset(char* pathToSave, unsigned char properties, int location) 
         /* Save the preset */
         FILE * file = fopen(pathToSave, "wb");
         if (file == NULL) return FILE_ERROR;
-        fwrite(buffer, sizeof(unsigned char), 6487, file);
+        fwrite(buffer, sizeof(unsigned char), readBackAmount, file);
         fclose(file);
     }
     snd_rawmidi_drop(handleIn);
