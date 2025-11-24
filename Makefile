@@ -53,7 +53,7 @@ cli-tcc: build_dir
 
 clean:
 	rm -r build_dir
-	rm received_preset.syx received_ir.syx
+	rm *.syx
 
 # Run various test scenarios
 run:
