@@ -314,9 +314,10 @@ static char getPreset(char* pathToSave, unsigned char properties, int location) 
         progressCallback(100);
 
         /* Save the preset */
-        /* TODO: Check if we're passed a file or directory so we know whether to append the name*/
-        const char *name = getPresetName(buffer);
-        strcat(pathToSave, name);
+        if (pathToSave[strlen(pathToSave) - 1] == '/') {
+            const char *name = getPresetName(buffer);
+            strcat(pathToSave, name);
+        }
 
         FILE *file = fopen(pathToSave, "wb");
         if (file == NULL) return FILE_ERROR;
@@ -410,6 +411,12 @@ static char getIR(char* pathToSave, unsigned char properties, int location) {
         progressCallback(100);
 
         /* Save the IR */
+        if (pathToSave[strlen(pathToSave) - 1] == '/') {
+            char name[64];
+            sprintf(name, "IR%d_%s", location, getTimeStamp());
+            strcat(pathToSave, name);
+        }
+
         FILE * file = fopen(pathToSave, "wb");
         if (file == NULL) return FILE_ERROR;
         fwrite(buffer, sizeof(unsigned char), lengthOfFile, file);

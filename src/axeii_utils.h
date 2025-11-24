@@ -86,7 +86,7 @@ char detectFileProperties(char* pathToPreset);
 char sendFile(char* pathToFile, unsigned char properties, int location);
 
 /** Get a file of the given properties from a location
- * @param char* pathToSave Path to save the obtained .syx file
+ * @param char* pathToSave Path to a directory (which must end in a '/'), or a file name to give the file (overriding the provided one).
  * @param unsigned char properties Properties of the unit and file wanted
  * @param int location Axe-FX II location to get from
  * @return char 0 on success, or error code
