@@ -240,20 +240,20 @@ static char sendPreset(char* pathToPreset, unsigned char properties) {
 
     /* Send start message */
     progressCallback(0);
-    /*recalcSysex(properties, buffer, 12);*/
+    recalcSysex(properties, buffer, 12);
     snd_rawmidi_write(handleOut, buffer, 12);
     snd_rawmidi_drop(handleIn);
 
     /* Send data messages */
     for (int i = 0; i < dataMessages; i++) {
-        /*recalcSysex(properties, &buffer[12+(202 * i)], 202);*/
+        recalcSysex(properties, &buffer[12+(202 * i)], 202);
         snd_rawmidi_write(handleOut, &buffer[12+(202 * i)], 202);
         snd_rawmidi_drop(handleIn);
         progressCallback((100 / (dataMessages + 2)) *  i + 2);
     }
 
     /* Send end message */
-    /*recalcSysex(properties,  &buffer[endAddress], 11);*/
+    recalcSysex(properties,  &buffer[endAddress], 11);
     snd_rawmidi_write(handleOut, &buffer[endAddress], 11);
     snd_rawmidi_drop(handleIn);
     progressCallback(100);
