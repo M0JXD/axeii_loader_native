@@ -97,18 +97,22 @@ static char detectAndEnable() {
 static int changePrIr_cb(Ihandle *ih) {
     (void)ih;
     char *str;
+    char *str2;
     char *pr_ir_md = strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset");
+    str2 = (pr_ir_md == NULL) ? "1": "0";
     switch (atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1) {
         case 0:
             IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "104");
-            str = (pr_ir_md == NULL) ? "104": "383" ;
+            str = (pr_ir_md == NULL) ? "104": "383";
             IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
+            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str2);
         break;
 
         default:
             str = (pr_ir_md == NULL) ? "1024": "767";
             IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "767");
             IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
+            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str2);
     }
     return IUP_DEFAULT;
 }
@@ -264,7 +268,7 @@ int main(int argc, char **argv) {
     entry_3  = IupLabel("Type could not be detected");
 
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=768, ACTIVE=NO");
+    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=1, SPINMAX=104, ACTIVE=NO");
     IupSetHandle("send_file", entry_1);
     IupSetHandle("send_loc", entry_2);
     IupSetHandle("send_type", entry_3);
@@ -285,7 +289,7 @@ int main(int argc, char **argv) {
     button_1 = IupButton("Browse...", NULL);
     entry_2  = IupText(NULL);
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=768");
+    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=383");
     IupSetHandle("recv_dir", entry_1);
     IupSetHandle("recv_loc", entry_2);
     IupSetCallback(button_1, "ACTION", (Icallback)openDir_cb);
