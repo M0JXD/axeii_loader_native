@@ -66,7 +66,22 @@ Requests sent for other numbers:
 300: F0 00 01 74 03 03 02 2C 2B F7
 383: F0 00 01 74 03 03 02 7F 78 F7
 
-So it's bank and then number. How does this work on an XL?
+So it's bank and then number. On the XL+ (which is the same aside from the expected ID and checksum byte) the continued numbers are (Thank you @Wepeell!):
+
+Bank D
+384: F0 00 01 74 07 03 03 00 02 F7
+448: F0 00 01 74 07 03 03 40 42 F7
+551: F0 00 01 74 07 03 03 7F 7D F7
+Bank E
+512: F0 00 01 74 07 03 04 00 05 F7
+576: F0 00 01 74 07 03 04 40 45 F7
+639: F0 00 01 74 07 03 04 7F 7A F7
+Bank F
+640: F0 00 01 74 07 03 05 00 04 F7
+704: F0 00 01 74 07 03 05 40 44 F7
+767: F0 00 01 74 07 03 05 7F 7B F7
+
+Which is clear that the bank number just increases again :)
 
 ## IRs
 
