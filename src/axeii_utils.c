@@ -142,9 +142,9 @@ static void calcReqCommand(unsigned char properties, int location, unsigned char
             command[6] = 0x05;
             command[7] = location - 640;
         } else {
+            /* Catch all, should never happen */
             command[6] = 0x00;
             command[7] = 1;
-            /* return LOCATION_OOB; */
         }
 
     } else if (properties & IS_VALID) {
@@ -229,8 +229,9 @@ static char sendPreset(char* pathToPreset, unsigned char properties) {
         return FILE_ERROR;
     }
 
-    /* Refuse to send XL presets to OG */
-    if ((properties & IS_OG_UNIT) && endAddress > 6488) {
+    /* Refuse to send XL presets to OG and vice versa */
+    if (((properties & IS_OG_UNIT) && (endAddress > 6488)) ||
+        (!(properties & IS_OG_UNIT) && (endAddress < 12930))) {
         return DESTINATION_UNIT_INVALID;
     }
 
@@ -394,8 +395,28 @@ static char getIR(char* pathToSave, unsigned char properties, int location) {
     return ret;
 }
 
-char sendFile(char* pathToFile, unsigned char properties, int location) {
+static char checkLocationValid(unsigned char properties, int location) {
     char ret = 0;
+
+    if (properties & IS_PRESET) {
+        if (properties & IS_OG_UNIT) {
+            ret = location < 0 || location > 383 ? LOCATION_OOB : 0;
+        } else {
+            ret = location < 0 || location > 767 ? LOCATION_OOB : 0;
+        }
+    } else if (properties & IS_VALID) {
+        if (properties & IS_OG_UNIT) {
+            ret = location < 1 || location > 104 ? LOCATION_OOB : 0;
+        } else {
+            ret = location < 1 || location > 1024 ? LOCATION_OOB : 0;
+        }
+    }
+    return ret;
+}
+
+char sendFile(char* pathToFile, unsigned char properties, int location) {
+    char ret = checkLocationValid(properties, location);
+    if (ret != 0) return ret;
     if (properties & IS_PRESET) {
         (void)location;
         ret = sendPreset(pathToFile, properties);
@@ -409,7 +430,8 @@ char sendFile(char* pathToFile, unsigned char properties, int location) {
 }
 
 char getFile(char* pathToSave, unsigned char properties, int location) {
-    char ret = 0;
+    char ret = checkLocationValid(properties, location);
+    if (ret != 0) return ret;
     if (properties & IS_PRESET) {
         ret = getPreset(pathToSave, properties, location);
     } else if (properties & IS_VALID) {
