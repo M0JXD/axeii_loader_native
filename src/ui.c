@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
     entry_3  = IupLabel("Type could not be detected");
 
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=384, ACTIVE=NO");
+    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=768, ACTIVE=NO");
     IupSetHandle("send_file", entry_1);
     IupSetHandle("send_loc", entry_2);
     IupSetHandle("send_type", entry_3);
@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
     button_1 = IupButton("Browse...", NULL);
     entry_2  = IupText(NULL);
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=384");
+    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=768");
     IupSetHandle("recv_dir", entry_1);
     IupSetHandle("recv_loc", entry_2);
     IupSetCallback(button_1, "ACTION", (Icallback)openDir_cb);

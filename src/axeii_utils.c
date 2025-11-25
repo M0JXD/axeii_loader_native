@@ -120,7 +120,6 @@ static void calcReqCommand(unsigned char properties, int location, unsigned char
     command[2] = 0x01;
     command[3] = 0x74;
 
-    /* TODO: How does all this work for XL/XL+? */
     if (properties & IS_PRESET) {
         command[5] = 0x03;  /* Patch Dump Req ID */
         /* Banks and preset number */
@@ -133,8 +132,23 @@ static void calcReqCommand(unsigned char properties, int location, unsigned char
         } else if (location < 384) {
             command[6] = 0x02;
             command[7] = location - 256;
+        } else if (location < 512) {
+            command[6] = 0x03;
+            command[7] = location - 384;
+        } else if (location < 640) {
+            command[6] = 0x04;
+            command[7] = location - 512;
+        } else if (location < 768) {
+            command[6] = 0x05;
+            command[7] = location - 640;
+        } else {
+            command[6] = 0x00;
+            command[7] = 1;
+            /* return LOCATION_OOB; */
         }
+
     } else if (properties & IS_VALID) {
+        /* TODO: How does all this work for XL/XL+? */
         command[5] = 0x7A;  /* IR Dump Req ID */
         command[6] = location - 1;
         command[7] = 0x0;
