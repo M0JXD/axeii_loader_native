@@ -230,7 +230,7 @@ static int show_notes_cb(Ihandle *ih) {
         IupSetAttributes(note5, "EXPAND=HORIZONTAL"),
         NULL);
     Ihandle *dlg = IupDialog(box);
-    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=360x62, RESIZE=NO, MINBOX=NO");
+    IupSetAttributes(dlg, "TITLE=\"Notes\", RESIZE=NO, MINBOX=NO");
     IupPopup(dlg, IUP_CENTER, IUP_CENTER);
     IupDestroy(dlg);
     return IUP_DEFAULT;
