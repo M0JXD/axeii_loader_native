@@ -342,10 +342,10 @@ int main(int argc, char **argv) {
     IupSetAttributes(box_1, "GAP=10, MARGIN=6x6");
 
     /* MENU */
-    menu_1 = IupItem("Notes", NULL);
+    menu_1 = IupItem("&Notes", NULL);
     IupSetCallback(menu_1, "ACTION", (Icallback)show_notes_cb);
     topmenu_1 = IupMenu(menu_1, NULL);
-    menu_1 = IupMenu(IupSubmenu("Help", topmenu_1), NULL);
+    menu_1 = IupMenu(IupSubmenu("&Help", topmenu_1), NULL);
 
     /* DIALOG */
     dlg = IupDialog(box_1);
