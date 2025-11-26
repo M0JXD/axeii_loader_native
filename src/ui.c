@@ -94,15 +94,39 @@ static char detectAndEnable() {
     return 0;
 }
 
-static int setMode_cb(Ihandle* ih, int new_pos, int old_pos) {
+static int changePrIr_cb(Ihandle *ih) {
+    (void)ih;
+    char *str;
+    char *str2;
+    char *pr_ir_md = strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset");
+    str2 = (pr_ir_md == NULL) ? "1": "0";
+    switch (atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1) {
+        case 0:
+            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "104");
+            str = (pr_ir_md == NULL) ? "104": "383";
+            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
+            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str2);
+        break;
+
+        default:
+            str = (pr_ir_md == NULL) ? "1024": "767";
+            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "767");
+            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
+            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str2);
+    }
+    return IUP_DEFAULT;
+}
+
+static int setMode_cb(Ihandle *ih, int new_pos, int old_pos) {
     (void)ih; (void)old_pos;
     mode = new_pos + 1;
     IupSetAttribute(progressbar, "VALUE", "0");
     detectAndEnable();
+    changePrIr_cb(NULL);
     return IUP_DEFAULT;
 }
 
-static int openFile_cb(Ihandle* ih) {
+static int openFile_cb(Ihandle *ih) {
     (void)ih;
     char filepath[256];
     IupSetAttribute(progressbar, "VALUE", "0");
@@ -113,7 +137,7 @@ static int openFile_cb(Ihandle* ih) {
     return IUP_DEFAULT;
 }
 
-static int openDir_cb(Ihandle* ih) {
+static int openDir_cb(Ihandle *ih) {
     (void)ih;
     IupSetAttribute(progressbar, "VALUE", "0");
     Ihandle *dlg = IupFileDlg();
@@ -127,7 +151,7 @@ static int openDir_cb(Ihandle* ih) {
     return IUP_DEFAULT;
 }
 
-static int start_cb(Ihandle* ih) {
+static int start_cb(Ihandle *ih) {
     int location = 0, midiIndex;
     char ret, properties = 0, filepath[256];
     IupSetAttribute(ih, "ACTIVE", "NO");
@@ -182,7 +206,7 @@ static int start_cb(Ihandle* ih) {
     return IUP_DEFAULT;
 }
 
-static int show_notes_cb(Ihandle* ih) {
+static int show_notes_cb(Ihandle *ih) {
     (void)ih;
     Ihandle *note1 = IupLabel("Note 1: Preset location is unrequired for sending, as it's loaded to the edit buffer.");
     Ihandle *note2 = IupLabel("Note 2: Scratchpad presets start at 101+ on MkII units.");
@@ -225,6 +249,7 @@ int main(int argc, char **argv) {
     IupSetHandle("midi_dev", entry_1);
     IupSetHandle("axe_type", entry_2);
     getMidiDevices(entry_1);
+    IupSetCallback(entry_2, "VALUECHANGED_CB", (Icallback)changePrIr_cb);
 
     box_1 = IupGridBox(label_1, entry_1, label_2, entry_2, NULL);
     IupSetAttributes(box_1, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
@@ -243,7 +268,7 @@ int main(int argc, char **argv) {
     entry_3  = IupLabel("Type could not be detected");
 
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=768, ACTIVE=NO");
+    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=1, SPINMAX=104, ACTIVE=NO");
     IupSetHandle("send_file", entry_1);
     IupSetHandle("send_loc", entry_2);
     IupSetHandle("send_type", entry_3);
@@ -264,7 +289,7 @@ int main(int argc, char **argv) {
     button_1 = IupButton("Browse...", NULL);
     entry_2  = IupText(NULL);
     IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=768");
+    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=383");
     IupSetHandle("recv_dir", entry_1);
     IupSetHandle("recv_loc", entry_2);
     IupSetCallback(button_1, "ACTION", (Icallback)openDir_cb);
@@ -286,6 +311,7 @@ int main(int argc, char **argv) {
     IupSetAttribute(receivetab, "TABTITLE", "RECEIVE");
     tabs = IupTabs(sendtab, receivetab, NULL);
     IupSetCallback(tabs, "TABCHANGEPOS_CB", (Icallback)setMode_cb);
+    IupSetCallback(select_1, "VALUECHANGED_CB", (Icallback)changePrIr_cb);
 
     /* TRANSFER DETAILS */
     messagelabel = IupLabel("Messages Will Display Here. Progress Bar Is Below.");

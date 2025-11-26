@@ -202,11 +202,13 @@ int main(int argc, char *argv[]) {
         if (ret == FILE_ERROR) {
             puts("Couldn't open file!");
         } else if (ret == DESTINATION_UNIT_INVALID) {
-            puts("Can't send XL/XL+ file to OG/MKII!");
+            puts("OG and XL/XL+ presets are not cross compatible! Please convert for your unit.");
         } else if (ret == HEADER_LOCK_ISSUE) {
             puts("Couldn't lock onto header!");
         } else if (ret == PROPERTIES_INVALID) {
             puts("File and/or values are not valid!");
+        } else if (ret == LOCATION_OOB) {
+            puts("Location is out of bounds!");
         }
         closeRawMIDIHandles();
     }
