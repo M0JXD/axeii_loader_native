@@ -30,6 +30,7 @@ static enum {
 static dev_info_t **devs = NULL;
 static Ihandle *startbutton, *messagelabel, *progressbar;
 
+/* Required by axeii_utils */
 void progressCallback(int currentProgress) {
     char valAsString[16];
     sprintf(valAsString, "%d", currentProgress);
@@ -43,6 +44,14 @@ void progressCallback(int currentProgress) {
         IupSetAttribute(messagelabel, "TITLE", "Transfer complete!");
     }
     IupFlush();
+}
+
+/* Required by axeii_utils */
+void nameProvider(char *name) {
+    char buf[256];
+    sprintf(buf, "File saved as %s", name);
+    IupSetAttribute(messagelabel, "TITLE", buf);
+
 }
 
 static void getMidiDevices(Ihandle *list) {
@@ -183,10 +192,10 @@ static int start_cb(Ihandle *ih) {
         properties |= IS_VALID;
         if (strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset")) {
             properties |= IS_PRESET;
-            strcat(filepath, "/received_preset.syx");
+            strcat(filepath, "/");
         } else {
             properties &= SET_IR;
-            strcat(filepath, "/received_ir.syx");
+            strcat(filepath, "/");
         }
         ret = getFile(filepath, properties, location);
     }

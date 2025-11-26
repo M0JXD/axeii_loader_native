@@ -16,6 +16,7 @@
  */
 
 /*#include <stdio.h>*/
+#include <libgen.h>
 #include <alsa/asoundlib.h>
 #include "axeii_utils.h"
 
@@ -32,7 +33,7 @@ static void printTenBytes(unsigned char *command) {
           );
 } */
 
-char setupRawMIDIHandles(char* devString) {
+char setupRawMIDIHandles(char *devString) {
     /* TODO: This call leaks? */
     char err = snd_rawmidi_open(&handleIn, &handleOut, devString, 0);
     if (err != 0) {
@@ -50,7 +51,7 @@ char closeRawMIDIHandles(void) {
     return 0;
 }
 
-char detectFileProperties(char* pathToPreset) {
+char detectFileProperties(char *pathToPreset) {
     char ret = 0;
     unsigned char buffer[6] = { 0, 0, 0, 0, 0, 0 };
     FILE *file = fopen(pathToPreset, "r");
@@ -92,7 +93,7 @@ char detectFileProperties(char* pathToPreset) {
 }
 
 /* Internal function to get a timestamp for saving */
-static const char* getTimeStamp(void) {
+static const char* fileTrailingName(void) {
     static char timeStamp[32];
     time_t t = time(NULL);
     strftime(timeStamp, sizeof(timeStamp),
@@ -101,7 +102,7 @@ static const char* getTimeStamp(void) {
 }
 
 /* Internal function to get a preset's name from the raw byte data */
-static const char* getPresetName(unsigned char* presetData) {
+static const char* getPresetName(unsigned char *presetData) {
     static char presetName[64];
     /* Name starts at address 1A, skip two bytes, 1D.. until 0x74 */
     for (int i = 0x1A, k = 0; i <= 0x74; i += 0x03, k++) {
@@ -123,12 +124,12 @@ static const char* getPresetName(unsigned char* presetData) {
             presetName[i] = '_';
     }
 
-    strcat(presetName, getTimeStamp());
+    strcat(presetName, fileTrailingName());
     return presetName;
 }
 
 /* Internal function to recalc sysex on the fly */
-static void recalcSysex(unsigned char properties, unsigned char* buffer, int len) {
+static void recalcSysex(unsigned char properties, unsigned char *buffer, int len) {
     int checksumByte = 0xF0;
     if (properties & IS_XL_UNIT) {
         buffer[4] = 0x06;
@@ -149,7 +150,7 @@ static void recalcSysex(unsigned char properties, unsigned char* buffer, int len
 }
 
 /* Internal function to calc the right command to send */
-static void calcReqCommand(unsigned char properties, int location, unsigned char* command, int len) {
+static void calcReqCommand(unsigned char properties, int location, unsigned char *command, int len) {
     /* HEADER BYTES */
     command[0] = 0xF0;
     command[1] = 0x00;
@@ -184,7 +185,7 @@ static void calcReqCommand(unsigned char properties, int location, unsigned char
         }
 
     } else if (properties & IS_VALID) {
-        /* TODO: How does all this work for XL/XL+? */
+        /* TODO: How does this work for XL/XL+? */
         command[5] = 0x7A;  /* IR Dump Req ID */
         command[6] = location - 1;
         command[7] = 0x0;
@@ -194,7 +195,7 @@ static void calcReqCommand(unsigned char properties, int location, unsigned char
 }
 
 /* Internal function for when fetching from to lock on to the right header bytes */
-static char fetchUntilHeaderCorrect(unsigned char* buffer) {
+static char fetchUntilHeaderCorrect(unsigned char *buffer) {
     char ret = HEADER_LOCK_ISSUE;
     int trys = -1;
     buffer[0] = 0;
@@ -242,12 +243,12 @@ static char fetchUntilHeaderCorrect(unsigned char* buffer) {
     return ret;
 }
 
-static char sendPreset(char* pathToPreset, unsigned char properties) {
+static char sendPreset(char *pathToPreset, unsigned char properties) {
     int read;
     char dataMessages;
     unsigned int endAddress;
     unsigned char buffer[12951];
-    FILE * file = fopen(pathToPreset, "r");
+    FILE *file = fopen(pathToPreset, "r");
     if (file == NULL) return FILE_ERROR;
 
     if (properties & IS_OG_FILE) {
@@ -297,7 +298,7 @@ static char sendPreset(char* pathToPreset, unsigned char properties) {
     return 0;
 }
 
-static char getPreset(char* pathToSave, unsigned char properties, int location) {
+static char getPreset(char *pathToSave, unsigned char properties, int location) {
     char ret;
     unsigned char command[10];
     unsigned char buffer[12951];
@@ -334,17 +335,17 @@ static char getPreset(char* pathToSave, unsigned char properties, int location) 
             const char *name = getPresetName(buffer);
             strcat(pathToSave, name);
         }
-
         FILE *file = fopen(pathToSave, "wb");
         if (file == NULL) return FILE_ERROR;
         fwrite(buffer, sizeof(unsigned char), readBackAmount, file);
         fclose(file);
+        nameProvider(basename(pathToSave));
     }
     snd_rawmidi_drop(handleIn);
     return ret;
 }
 
-static char sendIR(char* pathToIR, unsigned char properties, int location) {
+static char sendIR(char *pathToIR, unsigned char properties, int location) {
     char irInfoStart;
     unsigned int endAddress;
     unsigned char buffer[10905];
@@ -396,7 +397,7 @@ static char sendIR(char* pathToIR, unsigned char properties, int location) {
     return 0;
 }
 
-static char getIR(char* pathToSave, unsigned char properties, int location) {
+static char getIR(char *pathToSave, unsigned char properties, int location) {
     char ret;
     unsigned char command[9] = { 0xF0, 0x00, 0x01, 0x74, 0x03, 0x19, 0x00, 0x1F, 0xF7 };
     unsigned char buffer[10905];
@@ -429,14 +430,15 @@ static char getIR(char* pathToSave, unsigned char properties, int location) {
         /* Save the IR */
         if (pathToSave[strlen(pathToSave) - 1] == '/') {
             char name[64];
-            sprintf(name, "IR%d%s", location, getTimeStamp());
+            sprintf(name, "IR%d%s", location, fileTrailingName());
             strcat(pathToSave, name);
         }
 
-        FILE * file = fopen(pathToSave, "wb");
+        FILE *file = fopen(pathToSave, "wb");
         if (file == NULL) return FILE_ERROR;
         fwrite(buffer, sizeof(unsigned char), lengthOfFile, file);
         fclose(file);
+        nameProvider(basename(pathToSave));
     }
     snd_rawmidi_drop(handleIn);
     return ret;
@@ -461,7 +463,7 @@ static char checkLocationValid(unsigned char properties, int location) {
     return ret;
 }
 
-char sendFile(char* pathToFile, unsigned char properties, int location) {
+char sendFile(char *pathToFile, unsigned char properties, int location) {
     char ret = checkLocationValid(properties, location);
     if (ret != 0) return ret;
     if (properties & IS_PRESET) {
@@ -476,7 +478,7 @@ char sendFile(char* pathToFile, unsigned char properties, int location) {
     return ret;
 }
 
-char getFile(char* pathToSave, unsigned char properties, int location) {
+char getFile(char *pathToSave, unsigned char properties, int location) {
     char ret = checkLocationValid(properties, location);
     if (ret != 0) return ret;
     if (properties & IS_PRESET) {

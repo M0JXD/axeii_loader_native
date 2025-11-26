@@ -77,6 +77,10 @@ void progressCallback(int currentProgress) {
     }
 }
 
+void nameProvider(char *name) {
+    printf("File saved as %s\n", name);
+}
+
 /* MAIN ENTRY */
 int main(int argc, char *argv[]) {
     unsigned char properties = OG_PRESET | IS_OG_UNIT; /* See the defines in axeii_loader.h */
@@ -119,6 +123,7 @@ int main(int argc, char *argv[]) {
             /* Set IR receive mode */
             case 'm':
                 properties &= SET_IR;
+                if (location == 0) location = 1;
             break;
 
             /* Preset or IR number */
