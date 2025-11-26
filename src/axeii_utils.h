@@ -99,7 +99,7 @@ char getFile(char *pathToSave, unsigned char properties, int location);
  */
 void progressCallback(int currentProgress);
 
-/** User implemented function to allow library to provide the name it saved with at save time,
+/** User implemented function to allow library to provide the name it saved with at save time.
  * @param char* name Name of the file that was just saved
  */
 void nameProvider(char *name);
