@@ -89,6 +89,7 @@ int main(int argc, char *argv[]) {
 
     if(getcwd(path, sizeof(path)) == NULL) {
         fprintf(stderr, "Failed to get current directory!\n");
+        return FILE_ERROR;
     }
     path[strlen(path)] = '/'; path[strlen(path) + 1] = '\0';
 
@@ -156,12 +157,6 @@ int main(int argc, char *argv[]) {
                 return 1;
             break;
         }
-    }
-
-    /* Sanity checks */
-    if (mode == 0) {
-        puts("No options specified. Pass -h for help.");
-        return 1;
     }
 
     /* Setup MIDI */

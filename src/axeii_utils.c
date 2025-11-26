@@ -96,7 +96,7 @@ static const char* getTimeStamp(void) {
     static char timeStamp[32];
     time_t t = time(NULL);
     strftime(timeStamp, sizeof(timeStamp),
-            "_%H:%M,%d-%m-%y", localtime(&t));
+            "_%Hh%Mm-%d-%m-%y.syx", localtime(&t));
     return timeStamp;
 }
 
@@ -104,20 +104,21 @@ static const char* getTimeStamp(void) {
 static const char* getPresetName(unsigned char* presetData) {
     static char presetName[64];
     /* Name starts at address 1A, skip two bytes, 1D.. until 0x74 */
-    for (int i = 0x1D, k = 0; i < 0x74; i += 0x03, k++) {
+    for (int i = 0x1A, k = 0; i <= 0x74; i += 0x03, k++) {
         presetName[k] = presetData[i];
     }
 
     /* Terminate after first non space character from the end */
-    for (int i = 32; i <= 0; i--) {
-        if (presetName[i] != 0x20) {
+    for (int i = 30; i > 0; i--) {
+        if (presetName[i] != ' ') {
             presetName[i + 1] = '\0';
+            break;
         }
     }
     presetName[31] = '\0';
 
     /* Replace all spaces with underscores */
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < (int)strlen(presetName); i++) {
         if (presetName[i] == ' ')
             presetName[i] = '_';
     }
@@ -427,7 +428,7 @@ static char getIR(char* pathToSave, unsigned char properties, int location) {
         /* Save the IR */
         if (pathToSave[strlen(pathToSave) - 1] == '/') {
             char name[64];
-            sprintf(name, "IR%d_%s", location, getTimeStamp());
+            sprintf(name, "IR%d%s", location, getTimeStamp());
             strcat(pathToSave, name);
         }
 
