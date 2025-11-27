@@ -120,7 +120,6 @@ F0 00 01 74 03 64 7A 00 18 F7
 F0 00 01 74 03 64 7B 00 19 F7
 F0 00 01 74 03 10 F7  (So we get MIDI pulses still...)
 F0 00 01 74 03 64 7B 00 19 F7
-F0 00 01 74 03 64 7B 00 19 F7
 ... more response packets ...
 F0 00 01 74 03 64 7B 00 19 F7
 F0 00 01 74 03 64 7C 00 1E F7
@@ -137,8 +136,7 @@ F0 00 01 74 03 7A 64 00 10 08 F7
 Sending to Scratch 4:
 F0 00 01 74 03 7A 67 00 10 0B F7
 
-Well that's boring :( they're just the numbers after 100
-IDK how it'll work on the XL/XL+, I suppose the scratch locations just move to the end again?
+So scratch locations are just the numbers after 100.
 
 Information on XL(+) (Thanks again @Wepeell!):
 
