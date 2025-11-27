@@ -106,23 +106,23 @@ static char detectAndEnable() {
 static int changePrIr_cb(Ihandle *ih) {
     (void)ih;
     char *str;
-    char *str2;
-    char *pr_ir_md = strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset");
-    str2 = (pr_ir_md == NULL) ? "1": "0";
+    char *rc_pr_ir_md = strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset");
     switch (atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1) {
         case 0:
+            /* OG Units */
             IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "104");
-            str = (pr_ir_md == NULL) ? "104": "383";
+            str = (rc_pr_ir_md == NULL) ? "104": "383";
             IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
-            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str2);
         break;
 
         default:
-            str = (pr_ir_md == NULL) ? "1024": "767";
-            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "767");
+            /* XL(+) Units */
+            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "1024");
+            str = (rc_pr_ir_md == NULL) ? "1024": "767";
             IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
-            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str2);
     }
+    str = (rc_pr_ir_md == NULL) ? "1": "0";
+    IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str);
     return IUP_DEFAULT;
 }
 
