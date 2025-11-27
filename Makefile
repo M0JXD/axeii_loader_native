@@ -53,19 +53,19 @@ cli-tcc: build_dir
 
 clean:
 	rm -r build_dir
-	rm received_preset.syx received_ir.syx
+	rm *.syx
 
-# Run various test scenarios
+# Run various scenarios that should pass
 run:
 	# Send a preset to the edit buffer
 	./build_dir/axeiiloader -i test_files/presets/og/BulbRhythmPatch_og.syx
 	@echo -e "\n"
 	@sleep 1
 	# Get a preset from position 150
-	./build_dir/axeiiloader -o received_preset.syx -p 150
+	./build_dir/axeiiloader -p 150
 	@echo -e "\n"
 	@sleep 1
-	# Send an short (OG captured) IR to position 68
+	# Send a short (OG captured) IR to position 68
 	./build_dir/axeiiloader -i test_files/irs/short_mad_oak_basketweave_r121.syx -p 68
 	@echo -e "\n"
 	@sleep 1
@@ -74,11 +74,7 @@ run:
 	@echo -e "\n"
 	@sleep 1
 	# Get an IR from position 70
-	./build_dir/axeiiloader -o received_ir.syx -m -p 70
-	@echo -e "\n"
-	@sleep 1
-	# Try to send an XL preset to an OG (should fail)
-	-./build_dir/axeiiloader -i test_files/presets/xl/MarkDay90sEVHSolo_xl.syx
+	./build_dir/axeiiloader -m -p 70
 	@echo -e "\n"
 	@sleep 1
 	# Clear edit buffer and IRs 68/69
@@ -93,3 +89,16 @@ run:
 	@sleep 1
 	# Run the GUI version
 	./build_dir/axeiiloader-gui
+
+# Run various scenarios that should fail
+tests:
+	# Try to send an XL preset to an OG
+	-./build_dir/axeiiloader -i test_files/presets/xl/MarkDay90sEVHSolo_xl.syx
+	@echo -e "\n"
+	@sleep 1
+	# Try to fetch an IR from position 0
+	-./build_dir/axeiiloader -m -p 0
+	@echo -e "\n"
+	@sleep 1
+	# Try to fetch a preset location 500 on an OG
+	-./build_dir/axeiiloader -p 500

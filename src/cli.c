@@ -28,14 +28,14 @@ enum modes { SEND = 1, RECEIVE };
 /* FUNCTIONS */
 static void usage() {
     puts("=== Axe-FX II Loader Help Text ===");
-    puts("Either -i or -o with a file name must be provided. You can't provide both -i and -o.");
+    puts("The default mode is receive mode, and will save obtained files into the current directory.");
     puts("If the -d option is not given it will try to autodetect from up to the first five available devices.");
     puts("The unit type (-t option) does not autodetect, and transfers may fail if it's incorrect.");
     puts("");
     puts("=== Options ===");
     puts("-d <device>      ALSA device string. Use 'amidi -l' and pass the \"Device\", e.g. \"hw:2,0\".");
-    puts("-i <file name>   Set input (send mode) file (whether it's a preset or IR will be autodetected).");
-    puts("-o <file name>   Set output (receive mode) file.");
+    puts("-i <file name>   Set send mode with given input file (whether it's a preset or IR will be autodetected).");
+    puts("-o <file name>   Override the provided file name for receive mode.");
     puts("-m               Set to get IRs in receive mode (ignored for send mode).");
     puts("-p <integer>     Set Preset or IR location, defaults to 0. Ignored when sending presets as they're loaded to the edit buffer.");
     puts("-t <o/x/p>       Set connected unit as Original/MKII (o), XL (x) or XL Plus (p). Defaults to Original/MKII." );
@@ -77,15 +77,25 @@ void progressCallback(int currentProgress) {
     }
 }
 
+void nameProvider(char *name) {
+    printf("File saved as %s\n", name);
+}
+
 /* MAIN ENTRY */
 int main(int argc, char *argv[]) {
     unsigned char properties = OG_PRESET | IS_OG_UNIT; /* See the defines in axeii_loader.h */
-    char mode                = 0;                      /* See enum modes */
+    char mode                = RECEIVE;                /* See enum modes */
     int location             = 0;                      /* Preset or cab number */
     char path[256]           = "";                     /* Forgive me security gods... */
     char devString[32]       = { '\0', '\0' };         /* ALSA device string */
     int ret = 0;
     int opt = 0;
+
+    if(getcwd(path, sizeof(path)) == NULL) {
+        fprintf(stderr, "Failed to get current directory!\n");
+        return FILE_ERROR;
+    }
+    path[strlen(path)] = '/'; path[strlen(path) + 1] = '\0';
 
     puts("===== AXE-FX II LOADER =====");
     while((opt = getopt(argc, argv, "d:i:o:p:t:smh")) != -1) {
@@ -97,20 +107,13 @@ int main(int argc, char *argv[]) {
 
             /* Input file */
             case 'i':
-                if (!mode) {
-                    mode = SEND;
-                } else {
-                    puts("Can't specify both send and receive mode.");
-                    return 1;
-                }
+                mode = SEND;
                 strcpy(path, optarg);
             break;
 
             /* Output file */
             case 'o':
-                if (!mode) {
-                    mode = RECEIVE;
-                } else {
+                if (mode == SEND) {
                     puts("Can't specify both send and receive mode.");
                     return 1;
                 }
@@ -120,6 +123,7 @@ int main(int argc, char *argv[]) {
             /* Set IR receive mode */
             case 'm':
                 properties &= SET_IR;
+                if (location == 0) location = 1;
             break;
 
             /* Preset or IR number */
@@ -158,12 +162,6 @@ int main(int argc, char *argv[]) {
                 return 1;
             break;
         }
-    }
-
-    /* Sanity checks */
-    if (mode == 0) {
-        puts("No options specified. Pass -h for help.");
-        return 1;
     }
 
     /* Setup MIDI */

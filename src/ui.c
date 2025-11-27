@@ -30,6 +30,7 @@ static enum {
 static dev_info_t **devs = NULL;
 static Ihandle *startbutton, *messagelabel, *progressbar;
 
+/* Required by axeii_utils */
 void progressCallback(int currentProgress) {
     char valAsString[16];
     sprintf(valAsString, "%d", currentProgress);
@@ -43,6 +44,14 @@ void progressCallback(int currentProgress) {
         IupSetAttribute(messagelabel, "TITLE", "Transfer complete!");
     }
     IupFlush();
+}
+
+/* Required by axeii_utils */
+void nameProvider(char *name) {
+    char buf[256];
+    sprintf(buf, "File saved as %s", name);
+    IupSetAttribute(messagelabel, "TITLE", buf);
+
 }
 
 static void getMidiDevices(Ihandle *list) {
@@ -97,23 +106,23 @@ static char detectAndEnable() {
 static int changePrIr_cb(Ihandle *ih) {
     (void)ih;
     char *str;
-    char *str2;
-    char *pr_ir_md = strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset");
-    str2 = (pr_ir_md == NULL) ? "1": "0";
+    char *rc_pr_ir_md = strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset");
     switch (atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1) {
         case 0:
+            /* OG Units */
             IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "104");
-            str = (pr_ir_md == NULL) ? "104": "383";
+            str = (rc_pr_ir_md == NULL) ? "104": "383";
             IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
-            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str2);
         break;
 
         default:
-            str = (pr_ir_md == NULL) ? "1024": "767";
-            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "767");
+            /* XL(+) Units */
+            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "1024");
+            str = (rc_pr_ir_md == NULL) ? "1024": "767";
             IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
-            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str2);
     }
+    str = (rc_pr_ir_md == NULL) ? "1": "0";
+    IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str);
     return IUP_DEFAULT;
 }
 
@@ -183,10 +192,10 @@ static int start_cb(Ihandle *ih) {
         properties |= IS_VALID;
         if (strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset")) {
             properties |= IS_PRESET;
-            strcat(filepath, "/received_preset.syx");
+            strcat(filepath, "/");
         } else {
             properties &= SET_IR;
-            strcat(filepath, "/received_ir.syx");
+            strcat(filepath, "/");
         }
         ret = getFile(filepath, properties, location);
     }
@@ -221,7 +230,7 @@ static int show_notes_cb(Ihandle *ih) {
         IupSetAttributes(note5, "EXPAND=HORIZONTAL"),
         NULL);
     Ihandle *dlg = IupDialog(box);
-    IupSetAttributes(dlg, "TITLE=\"Notes\", SIZE=360x62, RESIZE=NO, MINBOX=NO");
+    IupSetAttributes(dlg, "TITLE=\"Notes\", RESIZE=NO, MINBOX=NO");
     IupPopup(dlg, IUP_CENTER, IUP_CENTER);
     IupDestroy(dlg);
     return IUP_DEFAULT;
@@ -333,10 +342,10 @@ int main(int argc, char **argv) {
     IupSetAttributes(box_1, "GAP=10, MARGIN=6x6");
 
     /* MENU */
-    menu_1 = IupItem("Notes", NULL);
+    menu_1 = IupItem("&Notes", NULL);
     IupSetCallback(menu_1, "ACTION", (Icallback)show_notes_cb);
     topmenu_1 = IupMenu(menu_1, NULL);
-    menu_1 = IupMenu(IupSubmenu("Help", topmenu_1), NULL);
+    menu_1 = IupMenu(IupSubmenu("&Help", topmenu_1), NULL);
 
     /* DIALOG */
     dlg = IupDialog(box_1);

@@ -16,14 +16,14 @@ You can get this help text by passing -h:
 ```
 ===== AXE-FX II LOADER =====
 === Axe-FX II Loader Help Text ===
-Either -i or -o with a file name must be provided. You can't provide both -i and -o.
+The default mode is receive mode, and will save obtained files into the current directory.
 If the -d option is not given it will try to autodetect from up to the first five available devices.
 The unit type (-t option) does not autodetect, and transfers may fail if it's incorrect.
 
 === Options ===
 -d <device>      ALSA device string. Use 'amidi -l' and pass the "Device", e.g. "hw:2,0".
--i <file name>   Set input (send mode) file (whether it's a preset or IR will be autodetected).
--o <file name>   Set output (receive mode) file.
+-i <file name>   Set send mode with given input file (whether it's a preset or IR will be autodetected).
+-o <file name>   Override the provided file name for receive mode.
 -m               Set to get IRs in receive mode (ignored for send mode).
 -p <integer>     Set Preset or IR location, defaults to 0. Ignored when sending presets as they're loaded to the edit buffer.
 -t <o/x/p>       Set connected unit as Original/MKII (o), XL (x) or XL Plus (p). Defaults to Original/MKII.
