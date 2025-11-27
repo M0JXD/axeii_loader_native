@@ -154,7 +154,7 @@ static void recalcSysex(unsigned char properties, unsigned char *buffer, int len
     buffer[len - 1] = 0xF7;
 }
 
-/* Internal function to calc the right command to send */
+/* Internal function to calc the right command to send for getPreset and sendIR */
 static void calcReqCommand(unsigned char properties, int location, unsigned char *command, int len) {
     /* HEADER BYTES */
     command[0] = 0xF0;
@@ -192,9 +192,48 @@ static void calcReqCommand(unsigned char properties, int location, unsigned char
     } else if (properties & IS_VALID) {
         /* TODO: How does this work for XL/XL+? */
         command[5] = 0x7A;  /* IR Dump Req ID */
-        command[6] = location - 1;
-        command[7] = 0x0;
-        command[8] = 0x10;
+        location -= 1;
+        if (properties & IS_OG_UNIT) {
+            command[6] = location;
+            command[7] = 0x0;
+            command[8] = 0x10;
+        } else {
+            if (location < 128) {
+                command[6] = 0x00;
+                command[7] = location;
+            } else if (location < 256) {
+                command[6] = 0x01;
+                command[7] = location - 128;
+            } else if (location < 384) {
+                command[6] = 0x02;
+                command[7] = location - 256;
+            } else if (location < 512) {
+                command[6] = 0x03;
+                command[7] = location - 384;
+            } else if (location < 640) {
+                command[6] = 0x04;
+                command[7] = location - 512;
+            } else if (location < 768) {
+                command[6] = 0x05;
+                command[7] = location - 640;
+            } else if (location < 896) {
+                command[6] = 0x06;
+                command[7] = location - 768;
+            } else if (location < 1024) {
+                command[6] = 0x07;
+                command[7] = location - 896;
+            } else if (location < 1029) {
+                /* Scratchpads */
+                command[6] = 0x08;
+                command[7] = location - 1024;
+            } else {
+                /* Catch all, should never happen */
+                command[6] = 0x08;
+                command[7] = 0;
+            }
+            command[8] = 0x0;
+            command[9] = 0x10;
+        }
     }
     recalcSysex(properties, command, len);
 }
@@ -372,15 +411,16 @@ static char sendIR(char *pathToIR, unsigned char properties, int location) {
         return FILE_ERROR;
     }
 
+    char startLen = (properties & IS_OG_UNIT) ? 11 : 12;
     unsigned char command[12];
-    calcReqCommand(properties, location, command, 11);
+    calcReqCommand(properties, location, command, startLen);
 
     /* Axe-FX II sends midi tempo ticks. */
     /* Incase the buffer has them, force it to clear */
     snd_rawmidi_drop(handleIn);
 
     /* Inform we're sending an IR dump */
-    snd_rawmidi_write(handleOut, command, 11);
+    snd_rawmidi_write(handleOut, command, startLen);
     snd_rawmidi_drop(handleIn);
 
     progressCallback(0);

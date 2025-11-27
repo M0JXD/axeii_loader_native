@@ -140,6 +140,37 @@ F0 00 01 74 03 7A 67 00 10 0B F7
 Well that's boring :( they're just the numbers after 100
 IDK how it'll work on the XL/XL+, I suppose the scratch locations just move to the end again?
 
+Information on XL(+) (Thanks again @Wepeell!):
+
+1:    F0 00 01 74 07 7A 00 00 00 10 68 F7
+128:  F0 00 01 74 07 7A 00 7F 00 10 17 F7
+
+129:  F0 00 01 74 07 7A 01 00 00 10 69 F7
+256:  F0 00 01 74 07 7A 01 7F 00 10 16 F7
+
+257:  F0 00 01 74 07 7A 02 00 00 10 6A F7
+384:  F0 00 01 74 07 7A 02 7F 00 10 15 F7
+
+385:  F0 00 01 74 07 7A 03 00 00 10 6B F7
+512:  F0 00 01 74 07 7A 03 7F 00 10 14 F7
+
+513:  F0 00 01 74 07 7A 04 00 00 10 6C F7
+640:  F0 00 01 74 07 7A 04 7F 00 10 13 F7
+
+641:  F0 00 01 74 07 7A 05 00 00 10 6D F7
+768:  F0 00 01 74 07 7A 05 7F 00 10 12 F7
+
+769:  F0 00 01 74 07 7A 06 00 00 10 6E F7
+896:  F0 00 01 74 07 7A 06 7F 00 10 11 F7
+
+897:  F0 00 01 74 07 7A 07 00 00 10 6F F7
+1024: F0 00 01 74 07 7A 07 7F 00 10 10 F7
+
+Scr1: F0 00 01 74 07 7A 08 00 00 10 60 F7
+Scr4: F0 00 01 74 07 7A 08 03 00 10 63 F7
+
+So it's much more in line with the Preset sending method, bank and then number.
+Still wonder what the 0x00 and 0x10 is for.
 
 ### Getting IRs
 
@@ -150,3 +181,7 @@ To get Cab 50 on Mk1/2:
 F0 00 01 74 03 19 31 2E F7
 
 Okay that's obvious too. But how does it work with the XL??
+I'm guessing it'll do the bank/number again and this will get IR 1...
+
+F0 00 01 74 07 19 00 00 xx F7
+
