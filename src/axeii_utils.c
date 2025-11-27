@@ -115,8 +115,13 @@ static const char* getPresetName(unsigned char *presetData) {
             presetName[i + 1] = '\0';
             break;
         }
+
+        if (i == 1) {
+            strcpy(presetName, "UNNAMED");
+        }
     }
     presetName[31] = '\0';
+
 
     /* Replace all spaces with underscores */
     for (int i = 0; i < (int)strlen(presetName); i++) {
