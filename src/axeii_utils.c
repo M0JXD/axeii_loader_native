@@ -502,7 +502,7 @@ static char checkLocationValid(unsigned char properties, int location) {
         if (properties & IS_OG_UNIT) {
             ret = location < 1 || location > 104 ? LOCATION_OOB : 0;
         } else {
-            ret = location < 1 || location > 1024 ? LOCATION_OOB : 0;
+            ret = location < 1 || location > 1028 ? LOCATION_OOB : 0;
         }
     }
     return ret;

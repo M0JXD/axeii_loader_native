@@ -117,8 +117,8 @@ static int changePrIr_cb(Ihandle *ih) {
 
         default:
             /* XL(+) Units */
-            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "1024");
-            str = (rc_pr_ir_md == NULL) ? "1024": "767";
+            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "1028");
+            str = (rc_pr_ir_md == NULL) ? "1028": "767";
             IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
     }
     str = (rc_pr_ir_md == NULL) ? "1": "0";
