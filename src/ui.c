@@ -218,10 +218,10 @@ static int start_cb(Ihandle *ih) {
 static int show_notes_cb(Ihandle *ih) {
     (void)ih;
     Ihandle *note1 = IupLabel("Note 1: Preset location is unrequired for sending, as it's loaded to the edit buffer.");
-    Ihandle *note2 = IupLabel("Note 2: Scratchpad presets start at 101+ on MkII units.");
+    Ihandle *note2 = IupLabel("Note 2: Scratchpad locations start after the User locations, e.g. 1025 is Scratchpad 1 on an XL.");
     Ihandle *note3 = IupLabel("Note 3: Please select the correct unit, or transfers may fail. Unit type is not autodetected.");
     Ihandle *note4 = IupLabel("Note 4: Only up to the first five MIDI devices are checked and listed.");
-    Ihandle *note5 = IupLabel("Note 5: XL/XL+ usage is untested, please see README and send feedback!");
+    Ihandle *note5 = IupLabel("Note 5: XL/XL+ support is in progress, please see README and open issues!");
     Ihandle *box   = IupVbox(
         IupSetAttributes(note1, "EXPAND=HORIZONTAL"),
         IupSetAttributes(note2, "EXPAND=HORIZONTAL"),
