@@ -265,7 +265,7 @@ static char fetchUntilHeaderCorrect(unsigned char *buffer) {
             ret = 0;
             break;
         } else if (buffer[5] == 0x64) {
-            /* The utility is really fast, so the response messages are not alway fully dropped from previous runs */
+            /* The utility is really fast, so the response messages are not always fully dropped from previous runs */
             snd_rawmidi_drop(handleIn);
             buffer[0] = 0;
             continue;
@@ -475,6 +475,7 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
             command[6] = 0x07;
             command[7] = location - 896;
         }
+        location++;
     }
     recalcSysex(properties, command, (properties & IS_OG_UNIT) ? 9 : 10);
 
