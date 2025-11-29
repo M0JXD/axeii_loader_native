@@ -10,7 +10,9 @@ This is created for two reasons:
 
 ## CLI usage
 
-CLI usage is mostly unchanged from before, but it can now autodetect the Axe-FX II.
+Without arguments, the CLI attempts to receive from the first preset location.
+You must specify a file with -i to change to send mode.
+If you'd prefer to set your own name for received files than the one provided by the tool, you can do so with -o.
 You can get this help text by passing -h:
 
 ```
@@ -29,7 +31,6 @@ The unit type (-t option) does not autodetect, and transfers may fail if it's in
 -t <o/x/p>       Set connected unit as Original/MKII (o), XL (x) or XL Plus (p). Defaults to Original/MKII.
 -h               Show this help text.
 === END OF HELP ===
-
 ```
 
 ### Examples
@@ -38,16 +39,19 @@ The unit type (-t option) does not autodetect, and transfers may fail if it's in
 `axeii-loader -d "hw:2,0" -i mypreset.syx`
 
 - Get a preset from location 100:
-`axeii-loader -o presetname.syx -p 100`
+`axeii-loader -p 100`
 
 - Send an IR to Cabinet location 15:
 `axeii-loader -i myir.syx -p 15`
 
-- Get an IR to Cabinet location 34:
-`axeii-loader -o irname.syx -m -p 34`
+- Get an IR from Cabinet location 34:
+`axeii-loader -m -p 34`
 
-- Note: On the Axe-FX II OG/MKII, the scratchpad locations are just the ones after 100, e.g. to send to scratchpad 2:
+- Note: Scratchpad locations are just the ones after the last available slot, e.g. to send to scratchpad 2 on an OG/MKII:
 `axeii-loader -i myir.syx -p 102`
+
+And likewise on an XL:
+`axeii-loader -i myir.syx -p 1025 -t x`
 
 
 ## GUI
@@ -88,14 +92,10 @@ An added benefit however is that the CLI version can now attempt to work out the
 
 ## Notes
 
-I have only tested on Linux Mint 22.2 with an Axe-FX II MkII.
+I have only tested on Linux Mint 22.2 with an Axe-FX II MkII. It has also had been used on Bazzite with an XL+.
 A GCC bug with -02 optimisations messes up the sysex checksum calculation, so the base is built with -01.
 When detecting MIDI devices in both the CLI and GUI versions, it will stop looking/counting after five devices.
 I can improve this to check all devices but will require reworking some aspects. Please open an issue if you need this fixed, otherwise I'm happy to leave as is.
-
-I also have no clue if this works with the extra locations in the XL/XL+, e.g. how presets after 383 work or IRs after 100.
-I've made some best attempt guesses to support it. If you're an XL/XL+ owner and want to help me out in implementing that let me know!
-Eavesdropping on FractalBot (via Wine) and the Axe-FX II is pretty easy with the ReceiveMIDI tool, and I should only need a handful of information to know how it works.
 
 ### AI Usage
 
@@ -112,3 +112,4 @@ Thanks to:
 - Geert Bevin's very handy ReceiveMIDI tool - https://github.com/gbevin/ReceiveMIDI
 - The Wine contributors, which has let me run Fractal-Bot and Axe-Edit fairly well.
 - The contributors to the Axe-FX Wiki's
+- @Wepeell for taking the time to provide me with the information to support XL(+) units.
