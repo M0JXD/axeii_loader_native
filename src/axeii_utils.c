@@ -444,11 +444,41 @@ static char sendIR(char *pathToIR, unsigned char properties, int location) {
 
 static char getIR(char *pathToSave, unsigned char properties, int location) {
     char ret;
-    unsigned char command[9] = { 0xF0, 0x00, 0x01, 0x74, 0x03, 0x19, 0x00, 0x1F, 0xF7 };
+    unsigned char command[10] = { 0xF0, 0x00, 0x01, 0x74, 0x03, 0x19 };
+
+    if (properties & IS_OG_UNIT) {
+        command[6] = location - 1;
+    } else {
+        if (location < 128) {
+            command[6] = 0x00;
+            command[7] = location;
+        } else if (location < 256) {
+            command[6] = 0x01;
+            command[7] = location - 128;
+        } else if (location < 384) {
+            command[6] = 0x02;
+            command[7] = location - 256;
+        } else if (location < 512) {
+            command[6] = 0x03;
+            command[7] = location - 384;
+        } else if (location < 640) {
+            command[6] = 0x04;
+            command[7] = location - 512;
+        } else if (location < 768) {
+            command[6] = 0x05;
+            command[7] = location - 640;
+        } else if (location < 896) {
+            command[6] = 0x06;
+            command[7] = location - 768;
+        } else if (location < 1024) {
+            command[6] = 0x07;
+            command[7] = location - 896;
+        }
+    }
+    recalcSysex(properties, command, (properties & IS_OG_UNIT) ? 9 : 10);
+
     unsigned char buffer[10905];
     const int lengthOfFile = properties & IS_OG_UNIT ? 10904 : 10905;
-    command[6] = location - 1;
-    recalcSysex(properties, command, 9);
 
     /* Axe-FX II sends midi tempo ticks. */
     /* Incase the buffer has them, force it to clear */
@@ -456,7 +486,7 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
     snd_rawmidi_drop(handleOut);
 
     /* Request a IR dump */
-    snd_rawmidi_write(handleOut, command, 9);
+    snd_rawmidi_write(handleOut, command, (properties & IS_OG_UNIT) ? 9 : 10);
 
     ret = fetchUntilHeaderCorrect(buffer);
 
@@ -468,7 +498,6 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
             double prog = ((double)i / (double)lengthOfFile) * 100;
             if (prog > 1)
                 progressCallback((int)prog);
-
         }
         progressCallback(100);
 
@@ -489,9 +518,8 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
     return ret;
 }
 
-static char checkLocationValid(unsigned char properties, int location) {
+static char checkLocationValidTx(unsigned char properties, int location) {
     char ret = 0;
-
     if (properties & IS_PRESET) {
         if (properties & IS_OG_UNIT) {
             ret = location < 0 || location > 383 ? LOCATION_OOB : 0;
@@ -508,8 +536,26 @@ static char checkLocationValid(unsigned char properties, int location) {
     return ret;
 }
 
+static char checkLocationValidRx(unsigned char properties, int location) {
+    char ret = 0;
+    if (properties & IS_PRESET) {
+        if (properties & IS_OG_UNIT) {
+            ret = location < 0 || location > 383 ? LOCATION_OOB : 0;
+        } else {
+            ret = location < 0 || location > 767 ? LOCATION_OOB : 0;
+        }
+    } else if (properties & IS_VALID) {
+        if (properties & IS_OG_UNIT) {
+            ret = location < 1 || location > 100 ? LOCATION_OOB : 0;
+        } else {
+            ret = location < 1 || location > 1024 ? LOCATION_OOB : 0;
+        }
+    }
+    return ret;
+}
+
 char sendFile(char *pathToFile, unsigned char properties, int location) {
-    char ret = checkLocationValid(properties, location);
+    char ret = checkLocationValidTx(properties, location);
     if (ret != 0) return ret;
     if (properties & IS_PRESET) {
         (void)location;
@@ -524,7 +570,7 @@ char sendFile(char *pathToFile, unsigned char properties, int location) {
 }
 
 char getFile(char *pathToSave, unsigned char properties, int location) {
-    char ret = checkLocationValid(properties, location);
+    char ret = checkLocationValidRx(properties, location);
     if (ret != 0) return ret;
     if (properties & IS_PRESET) {
         ret = getPreset(pathToSave, properties, location);
