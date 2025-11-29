@@ -449,6 +449,7 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
     if (properties & IS_OG_UNIT) {
         command[6] = location - 1;
     } else {
+        location--;
         if (location < 128) {
             command[6] = 0x00;
             command[7] = location;
