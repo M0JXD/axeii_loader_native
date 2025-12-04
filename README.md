@@ -50,8 +50,8 @@ The unit type (-t option) does not autodetect, and transfers may fail if it's in
 - Note: Scratchpad locations are just the ones after the last available slot, e.g. to send to scratchpad 2 on an OG/MKII:
 `axeii-loader -i myir.syx -p 102`
 
-And likewise on an XL:
-`axeii-loader -i myir.syx -p 1025 -t x`
+  - And likewise on an XL:
+`axeii-loader -i myir.syx -p 1026 -t x`
 
 
 ## GUI
@@ -71,9 +71,10 @@ Download IUP [here](https://sourceforge.net/projects/iup/files/3.32/Linux%20Libr
 
 ```
 src/
-    axeiiloader.c
+    axeii_utils.c
     cli.c
     ui.c
+    ...
 lib/
     iup/
         libiup.a
@@ -86,7 +87,7 @@ lib/
 ## License
 
 The original license was MIT (which is my preference), but this had to be changed to the GPLv2.
-When creating the UI I realised I needed to get the MIDI Device hardware strings/names.
+When creating the UI I realised I needed to get the MIDI device hardware strings/names.
 One option is to call and parse `amidi -l` but that is poor and not future-proof (if the output layout changes in a future version) and parsing strings in C is a nightmare. So instead the better option is to do the RawMIDI calls that amidi itself does. To do this right I essentially refactored amidi's source to just what the -l option does. This makes my code a derivative of amidi's and hence the project license had to be updated.
 An added benefit however is that the CLI version can now attempt to work out the correct device without needing to pass it.
 
