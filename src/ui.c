@@ -221,13 +221,15 @@ static int show_notes_cb(Ihandle *ih) {
     Ihandle *note2 = IupLabel("Note 2: Scratchpad locations start after the User locations, e.g. 1025 is Scratchpad 1 on an XL.");
     Ihandle *note3 = IupLabel("Note 3: Please select the correct unit, or transfers may fail. Unit type is not autodetected.");
     Ihandle *note4 = IupLabel("Note 4: Only up to the first five MIDI devices are checked and listed.");
-    Ihandle *note5 = IupLabel("Note 5: XL/XL+ support is in progress, please see README and open issues!");
+    Ihandle *note5 = IupLabel("Note 5: This utility does not convert between OG/MKII and XL(+) presets.");
+    Ihandle *note6 = IupLabel("Note 6: XL/XL+ support thanks to @Wepeell!");
     Ihandle *box   = IupVbox(
         IupSetAttributes(note1, "EXPAND=HORIZONTAL"),
         IupSetAttributes(note2, "EXPAND=HORIZONTAL"),
         IupSetAttributes(note3, "EXPAND=HORIZONTAL"),
         IupSetAttributes(note4, "EXPAND=HORIZONTAL"),
         IupSetAttributes(note5, "EXPAND=HORIZONTAL"),
+        IupSetAttributes(note6, "EXPAND=HORIZONTAL"),
         NULL);
     Ihandle *dlg = IupDialog(box);
     IupSetAttributes(dlg, "TITLE=\"Notes\", RESIZE=NO, MINBOX=NO");
