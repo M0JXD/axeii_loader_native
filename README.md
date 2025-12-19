@@ -1,12 +1,9 @@
 # A simple Preset/IR loader for the Axe-FX II on Linux
 
-This repo replaces the my old [axeii_loader_cli](https://github.com/M0JXD/axeii_loader_cli) repo. It offers both the CLI app, and a native GUI (using IUP and the GTK3 back-end).
+This is a simple loading/exporting utility for the Axe-FX II. It offers both the CLI app, and a native GUI (using IUP and the GTK3 back-end).
 You do not need the CLI app to use the GUI app, they are completely separate but are built from the same back-end code.
 
-This is created for two reasons:
-
-- To learn about native UI libraries (in this case IUP) as I want to make and contribute to "truly native" apps.
-- I previously made a [GUI version of this utility in Flutter](https://github.com/M0JXD/axeii_loader), but at the moment the FlutterMidiCommand package it uses for the back-end has bugs on Linux. However I want to keep that version "as is" with the package (instead of replacing it with a FFI back-end), as there is the option of easily porting to other platforms in the future should the MIDI package be picked up and maintained again.
+I previously made a [GUI version of this utility in Flutter](https://github.com/M0JXD/axeii_loader), but at the moment the FlutterMidiCommand package it uses for the back-end has bugs on Linux. However I want to keep that version "as is" with the package (instead of replacing it with a FFI back-end), as there is the option of easily porting to other platforms in the future should the MIDI package be picked up and maintained again.
 
 ## CLI usage
 
@@ -93,7 +90,7 @@ An added benefit however is that the CLI version can now attempt to work out the
 
 ## Notes
 
-I have only tested on Linux Mint 22.2 with an Axe-FX II MkII. It has also had been used on Bazzite with an XL+.
+I have only tested on Linux Mint 22.2 with an Axe-FX II MkII. It has also been used on Bazzite with an XL+.
 A GCC bug with -02 optimisations messes up the sysex checksum calculation, so the base is built with -01.
 When detecting MIDI devices in both the CLI and GUI versions, it will stop looking/counting after five devices.
 I can improve this to check all devices but will require reworking some aspects. Please open an issue if you need this fixed, otherwise I'm happy to leave as is.
