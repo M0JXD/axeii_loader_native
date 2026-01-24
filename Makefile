@@ -15,6 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 gtk3libs := -lgtk-3 -lgdk-3 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -lglib-2.0 -lXext -lX11 -lm
+UNAME_S := $(shell uname -s)
 
 all: cli gui
 
@@ -26,27 +27,34 @@ gui: build_dir build_dir/axeiiloader-gui
 build_dir:
 	-mkdir build_dir
 
-build_dir/axeiiloader: build_dir/axeii_utils.o build_dir/midi_devs.o src/cli.c
-	gcc src/cli.c build_dir/axeii_utils.o build_dir/midi_devs.o -o build_dir/axeiiloader \
+build_dir/axeiiloader: build_dir/axeii_utils.o src/cli.c
+	cc src/cli.c build_dir/axeii_utils.o -o build_dir/axeiiloader \
 	-Wall -Werror -Wextra -Wpedantic -lasound -O2
 
-build_dir/axeiiloader-gui: build_dir/axeii_utils.o build_dir/midi_devs.o src/ui.c
-	gcc src/ui.c build_dir/axeii_utils.o build_dir/midi_devs.o -o build_dir/axeiiloader-gui \
+build_dir/axeiiloader-gui: build_dir/axeii_utils.o src/ui.c
+	cc src/ui.c build_dir/axeii_utils.o -o build_dir/axeiiloader-gui \
 	-Wall -Werror -Wpedantic \
 	-I./lib/iup/include -L./lib/iup -Wl,-Bstatic -liup \
 	-Wl,-Bdynamic $(gtk3libs) -lasound -O2
 
-build_dir/axeii_utils.o: src/axeii_utils.c src/axeii_utils.h
-	# GCC -O2 optimisations mess up calculating the sysex checksum.
-	gcc -c src/axeii_utils.c -o build_dir/axeii_utils.o \
+ifeq ($(UNAME_S),Linux)
+# ALSA BACKEND
+build_dir/axeii_utils.o: src/alsa/axeii_utils_alsa.c src/axeii_utils.h
+	# cc -O2 optimisations mess up calculating the sysex checksum.
+	cc -c src/alsa/axeii_utils_alsa.c -o build_dir/axeii_utils.o \
 	-Wall -Werror -Wextra -Wpedantic -lasound -O1
+endif
 
-build_dir/midi_devs.o: src/midi_devs.c src/midi_devs.h
-	gcc -c src/midi_devs.c -o build_dir/midi_devs.o \
+ifeq ($(UNAME_S),FreeBSD)
+# OSS BACKEND
+build_dir/axeii_utils.o: src/oss/axeii_utils_alsa.c src/axeii_utils.h
+	# TODO: Does Clang have this issue?
+	cc -c src/alsa/axeii_utils_oss.c -o build_dir/axeii_utils.o \
 	-Wall -Werror -Wextra -Wpedantic -lasound -O2
+endif
 
 cli-tcc: build_dir
-	# Build the CLI version with TCC bc why not? You should start clean for this!
+	# Build the ALSA CLI version with TCC bc why not? You should start clean for this!
 	tcc -c src/axeii_utils.c -o build_dir/axeii_utils.o
 	tcc -c src/midi_devs.c -o build_dir/midi_devs.o
 	tcc src/cli.c build_dir/axeii_utils.o build_dir/midi_devs.o -o build_dir/axeiiloader -Wall -lasound

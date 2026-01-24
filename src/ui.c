@@ -20,7 +20,6 @@
 #include <string.h>
 #include <iup.h>
 #include "axeii_utils.h"
-#include "midi_devs.h"
 
 static enum {
     SEND_MODE = 1,

@@ -20,7 +20,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "axeii_utils.h"
-#include "midi_devs.h"
 
 /* ENUMS */
 enum modes { SEND = 1, RECEIVE };

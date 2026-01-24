@@ -1,4 +1,4 @@
-/*    axeii_utils.h - Defines and declarations to send/receive data from an Axe-FX II
+/*    axeii_utils.h - API header for utilities to send/receive data from an Axe-FX II
  *    Copyright (C) 2025  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,12 @@ enum errors {
     LOCATION_OOB = -5
 };
 
+/* STRUCTS */
+typedef struct DEV_INFO_S {
+    char hw_string[32];
+    char hw_name[120];
+} dev_info_t;
+
 /* FUNCTION DECLARATIONS */
 
 /** Sets up the libraries internal RawMIDI handles to the device
@@ -103,5 +109,17 @@ void progressCallback(int currentProgress);
  * @param char* name Name of the file that was just saved
  */
 void nameProvider(char *name);
+
+/** Utility to get a list of MIDI devices, which attempts to detect which one is an Axe-FX II
+ * @param amount returns the amount of devices
+ * @param axe_index the index of an Axe-FX II MIDI device
+ * @return array of midi device info of length "amount"
+ */
+dev_info_t** get_axe_midi_devs(int *amount, int *axe_index);
+
+/** Free function for get_axe_midi_devs should the OS implementation need it
+ * @param devs array of MIDI devices to be freed
+ */
+void free_axe_midi_devs(dev_info_t **devs);
 
 #endif /* AXEII_UTILS_H */
