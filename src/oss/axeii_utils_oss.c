@@ -1,5 +1,2 @@
-#include "stdio.h"
+#include "../axe_utils.h"
 
-void main() {
-    printf("Hello World!\n");
-}

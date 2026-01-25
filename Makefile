@@ -15,7 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 gtk3libs := -lgtk-3 -lgdk-3 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -lglib-2.0 -lXext -lX11 -lm
-UNAME_S := $(shell uname -s)
+
 
 all: cli gui
 
@@ -37,21 +37,19 @@ build_dir/axeiiloader-gui: build_dir/axeii_utils.o src/ui.c
 	-I./lib/iup/include -L./lib/iup -Wl,-Bstatic -liup \
 	-Wl,-Bdynamic $(gtk3libs) -lasound -O2
 
-ifeq ($(UNAME_S),Linux)
-# ALSA BACKEND
-build_dir/axeii_utils.o: src/alsa/axeii_utils_alsa.c src/axeii_utils.h
-	# cc -O2 optimisations mess up calculating the sysex checksum.
-	cc -c src/alsa/axeii_utils_alsa.c -o build_dir/axeii_utils.o \
-	-Wall -Werror -Wextra -Wpedantic -lasound -O1
-endif
-
-ifeq ($(UNAME_S),FreeBSD)
-# OSS BACKEND
-build_dir/axeii_utils.o: src/oss/axeii_utils_alsa.c src/axeii_utils.h
-	# TODO: Does Clang have this issue?
-	cc -c src/alsa/axeii_utils_oss.c -o build_dir/axeii_utils.o \
-	-Wall -Werror -Wextra -Wpedantic -lasound -O2
-endif
+build_dir/axeii_utils.o: src/alsa/axeii_utils_alsa.c src/oss/axeii_utils_oss.c src/axeii_utils.h
+	# Detect the platform and build ALSA on Linux, or OSS on FreeBSD
+	NAME=`uname -s` ; \
+	if [ $$NAME = "Linux" ]; then \
+		# cc -O2 optimisations mess up calculating the sysex checksum. \
+		cc -c src/alsa/axeii_utils_alsa.c -o build_dir/axeii_utils.o \
+		-Wall -Werror -Wextra -Wpedantic -lasound -O1 ; \
+	fi ; \
+	if [ $$NAME = "FreeBSD" ]; then \
+		# TODO: Does Clang have the issue? \
+		cc -c src/alsa/axeii_utils_oss.c -o build_dir/axeii_utils.o \
+		-Wall -Werror -Wextra -Wpedantic -lasound -O2 ; \
+	fi
 
 cli-tcc: build_dir
 	# Build the ALSA CLI version with TCC bc why not? You should start clean for this!
