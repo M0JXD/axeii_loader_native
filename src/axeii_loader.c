@@ -1,5 +1,5 @@
-/*    axeii_utils_alsa.c - ALSA implementation of axeii_utils.h Axe-FX II
- *    Copyright (C) 2025  Jamie Drinkell
+/*    axeii_loader.c - agnostic implementation send/receive data from an Axe-FX II
+ *    Copyright (C) 2025-2026  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -15,17 +15,12 @@
  *    with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-/*#include <stdio.h>*/
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <time.h>
 #include <libgen.h>
-#include <alsa/asoundlib.h>
-#include "../axeii_utils.h"
-
-/* GLOBALS */
-static snd_rawmidi_t *handleIn, *handleOut;
-
-/* FUNCTIONS */
+#include "axeii_loader.h"
 
 /* Handy Util */ /*
 static void printTenBytes(unsigned char *command) {
@@ -34,24 +29,6 @@ static void printTenBytes(unsigned char *command) {
             command[5], command[6], command[7], command[8], command[9]
           );
 } */
-
-char setupRawMIDIHandles(char *devString) {
-    /* TODO: This call leaks? */
-    char err = snd_rawmidi_open(&handleIn, &handleOut, devString, 0);
-    if (err != 0) {
-        return 1;
-    }
-    /* Blocking mode */
-    snd_rawmidi_nonblock(handleIn, 0);
-    /*snd_rawmidi_nonblock(handleOut, 0);*/
-    return 0;
-}
-
-char closeRawMIDIHandles(void) {
-    snd_rawmidi_close(handleIn);
-    snd_rawmidi_close(handleOut);
-    return 0;
-}
 
 char detectFileProperties(char *pathToPreset) {
     char ret = 0;
@@ -248,15 +225,15 @@ static char fetchUntilHeaderCorrect(unsigned char *buffer) {
     do {
         /* Flush any trailing messages */
         while (buffer[0] != 0xF0) {
-            snd_rawmidi_read(handleIn, &buffer[0], 1);
+            getMidi(&buffer[0], 1);
         }
 
         /* Read the next 5 bytes to check it's the right message header */
-        snd_rawmidi_read(handleIn, &buffer[1], 1);
-        snd_rawmidi_read(handleIn, &buffer[2], 1);
-        snd_rawmidi_read(handleIn, &buffer[3], 1);
-        snd_rawmidi_read(handleIn, &buffer[4], 1);
-        snd_rawmidi_read(handleIn, &buffer[5], 1);
+        getMidi(&buffer[1], 1);
+        getMidi(&buffer[2], 1);
+        getMidi(&buffer[3], 1);
+        getMidi(&buffer[4], 1);
+        getMidi(&buffer[5], 1);
         /* Was handy for debugging, note stdio is not included */
         /*printf("Read header bytes are: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n",
             buffer[0], buffer[1], buffer[2],
@@ -268,12 +245,12 @@ static char fetchUntilHeaderCorrect(unsigned char *buffer) {
             break;
         } else if (buffer[5] == 0x64) {
             /* The utility is really fast, so the response messages are not always fully dropped from previous runs */
-            snd_rawmidi_drop(handleIn);
+            clearMidiInBuffer();
             buffer[0] = 0;
             continue;
         } else {
             /* Discard wrong packet */
-            snd_rawmidi_drop(handleIn);
+            clearMidiInBuffer();
             /* TODO: Allow tempo to be runnning. Only read more as needed on the next loop */
             /* Maybe another 0xF0 has already been read, move everything over */
             /*for (int nextF0 = 1; nextF0 < 6; nextF0++) {*/
@@ -320,26 +297,26 @@ static char sendPreset(char *pathToPreset, unsigned char properties) {
 
     /* Axe-FX II sends midi tempo ticks. */
     /* Incase the buffer has them, force it to clear */
-    snd_rawmidi_drop(handleIn);
+    clearMidiInBuffer();
 
     /* Send start message */
     progressCallback(0);
     recalcSysex(properties, buffer, 12);
-    snd_rawmidi_write(handleOut, buffer, 12);
-    snd_rawmidi_drop(handleIn);
+    sendMidi(buffer, 12);
+    clearMidiInBuffer();
 
     /* Send data messages */
     for (int i = 0; i < dataMessages; i++) {
         recalcSysex(properties, &buffer[12+(202 * i)], 202);
-        snd_rawmidi_write(handleOut, &buffer[12+(202 * i)], 202);
-        snd_rawmidi_drop(handleIn);
+        sendMidi(&buffer[12+(202 * i)], 202);
+        clearMidiInBuffer();
         progressCallback((100 / (dataMessages + 2)) *  i + 2);
     }
 
     /* Send end message */
     recalcSysex(properties,  &buffer[endAddress], 11);
-    snd_rawmidi_write(handleOut, &buffer[endAddress], 11);
-    snd_rawmidi_drop(handleIn);
+    sendMidi(&buffer[endAddress], 11);
+    clearMidiInBuffer();
     progressCallback(100);
     return 0;
 }
@@ -359,17 +336,17 @@ static char getPreset(char *pathToSave, unsigned char properties, int location) 
 
     /* Axe-FX II sends midi tempo ticks. */
     /* Incase the buffer has them, force it to clear */
-    snd_rawmidi_drop(handleIn);
+    clearMidiInBuffer();
 
     /* Request a preset dump */
-    snd_rawmidi_write(handleOut, command, 10);
+    sendMidi(command, 10);
     ret = fetchUntilHeaderCorrect(buffer);
 
     if (ret == 0) {
         progressCallback(0);
         /* Grab everything else... */
         for (unsigned int i = 6; i < readBackAmount; i++) {
-            snd_rawmidi_read(handleIn, &buffer[i], 1);
+            getMidi(&buffer[i], 1);
             double prog = ((double)i / (double)readBackAmount) * 100;
             if (prog > 1)
                 progressCallback((int)prog);
@@ -387,7 +364,7 @@ static char getPreset(char *pathToSave, unsigned char properties, int location) 
         fclose(file);
         nameProvider(basename(pathToSave));
     }
-    snd_rawmidi_drop(handleIn);
+    clearMidiInBuffer();
     return ret;
 }
 
@@ -419,18 +396,18 @@ static char sendIR(char *pathToIR, unsigned char properties, int location) {
 
     /* Axe-FX II sends midi tempo ticks. */
     /* Incase the buffer has them, force it to clear */
-    snd_rawmidi_drop(handleIn);
+    clearMidiInBuffer();
 
     /* Inform we're sending an IR dump */
-    snd_rawmidi_write(handleOut, command, startLen);
-    snd_rawmidi_drop(handleIn);
+    sendMidi(command, startLen);
+    clearMidiInBuffer();
 
     progressCallback(0);
     /* Send data messages */
     for (int i = 0; i < 64; i++) {
         recalcSysex(properties, &buffer[irInfoStart+(170 * i)], 170);
-        snd_rawmidi_write(handleOut, &buffer[irInfoStart+(170 * i)], 170);
-        snd_rawmidi_drop(handleIn);
+        sendMidi(&buffer[irInfoStart+(170 * i)], 170);
+        clearMidiInBuffer();
         double prog = ((double)i / (double)66.0) * 100;
         if (prog > 1)
             progressCallback((int)prog);
@@ -438,8 +415,8 @@ static char sendIR(char *pathToIR, unsigned char properties, int location) {
 
     /* Send end message */
     recalcSysex(properties,  &buffer[endAddress], 13);
-    snd_rawmidi_write(handleOut, &buffer[endAddress], 13);
-    snd_rawmidi_drop(handleIn);
+    sendMidi(&buffer[endAddress], 13);
+    clearMidiInBuffer();
     progressCallback(100);
     return 0;
 }
@@ -486,11 +463,11 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
 
     /* Axe-FX II sends midi tempo ticks. */
     /* Incase the buffer has them, force it to clear */
-    snd_rawmidi_drop(handleIn);
-    snd_rawmidi_drop(handleOut);
+    clearMidiInBuffer();
+    clearMidiOutBuffer();
 
     /* Request a IR dump */
-    snd_rawmidi_write(handleOut, command, (properties & IS_OG_UNIT) ? 9 : 10);
+    sendMidi(command, (properties & IS_OG_UNIT) ? 9 : 10);
 
     ret = fetchUntilHeaderCorrect(buffer);
 
@@ -498,7 +475,7 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
         progressCallback(0);
         /* Grab everything else... */
         for (int i = 6; i < lengthOfFile; i++) {
-            snd_rawmidi_read(handleIn, &buffer[i], 1);
+            getMidi(&buffer[i], 1);
             double prog = ((double)i / (double)lengthOfFile) * 100;
             if (prog > 1)
                 progressCallback((int)prog);
@@ -518,7 +495,7 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
         fclose(file);
         nameProvider(basename(pathToSave));
     }
-    snd_rawmidi_drop(handleIn);
+    clearMidiInBuffer();
     return ret;
 }
 
@@ -569,7 +546,7 @@ char sendFile(char *pathToFile, unsigned char properties, int location) {
     } else {
         ret = PROPERTIES_INVALID;
     }
-    snd_rawmidi_drop(handleIn);
+    clearMidiInBuffer();
     return ret;
 }
 
@@ -583,200 +560,6 @@ char getFile(char *pathToSave, unsigned char properties, int location) {
     } else {
         ret = PROPERTIES_INVALID;
     }
-    snd_rawmidi_drop(handleIn);
+    clearMidiInBuffer();
     return ret;
-}
-
-/* This rest of this file is modified and reduced from the amidi.c source code.
- * Note it only checks the first five devices.
- * Original license is below.
- */
-
-/*
- *  amidi.c - read from/write to RawMIDI ports
- *
- *  Copyright (c) Clemens Ladisch <clemens@ladisch.de>
- *
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-
-
-/*static int list_all;*/
-
-static void error(const char *format, ...)
-{
-	va_list ap;
-
-	va_start(ap, format);
-	vfprintf(stderr, format, ap);
-	va_end(ap);
-	putc('\n', stderr);
-}
-
-static int list_device(snd_ctl_t *ctl, int card, int device, dev_info_t *dev)
-{
-	snd_rawmidi_info_t *info;
-	const char *name;
-	const char *sub_name;
-	int subs, subs_in, subs_out;
-	int sub;
-	int err;
-	int amount = 0;
-
-	snd_rawmidi_info_alloca(&info);
-	snd_rawmidi_info_set_device(info, device);
-
-	snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
-	err = snd_ctl_rawmidi_info(ctl, info);
-	if (err >= 0)
-		subs_in = snd_rawmidi_info_get_subdevices_count(info);
-	else
-		subs_in = 0;
-
-	snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_OUTPUT);
-	err = snd_ctl_rawmidi_info(ctl, info);
-	if (err >= 0)
-		subs_out = snd_rawmidi_info_get_subdevices_count(info);
-	else
-		subs_out = 0;
-
-	subs = subs_in > subs_out ? subs_in : subs_out;
-	if (!subs)
-		return 0;
-
-	for (sub = 0; sub < subs; ++sub) {
-		snd_rawmidi_info_set_stream(info, sub < subs_in ?
-					    SND_RAWMIDI_STREAM_INPUT :
-					    SND_RAWMIDI_STREAM_OUTPUT);
-		snd_rawmidi_info_set_subdevice(info, sub);
-		err = snd_ctl_rawmidi_info(ctl, info);
-		if (err < 0) {
-			error("cannot get rawmidi information %d:%d:%d: %s\n",
-			      card, device, sub, snd_strerror(err));
-			return 0;
-		}
-
-        /* At time of development, this is a bleeding edge (commit 2 days old!) change to filter inactive ports */
-        /* It requires Kernel 6.14 or later so it is omitted. */
-		/*if (!list_all &&*/
-		/*    (snd_rawmidi_info_get_flags(info) & SNDRV_RAWMIDI_INFO_STREAM_INACTIVE))*/
-		/*	continue;*/
-		name = snd_rawmidi_info_get_name(info);
-		sub_name = snd_rawmidi_info_get_subdevice_name(info);
-		if (sub == 0 && sub_name[0] == '\0') {
-			/*printf("%c%c  hw:%d,%d    %s",*/
-			/*       sub < subs_in ? 'I' : ' ',*/
-			/*       sub < subs_out ? 'O' : ' ',*/
-			/*       card, device, name);*/
-			sprintf(dev->hw_string, "hw:%d,%d", card, device);
-			sprintf(dev->hw_name, "%s", name);
-			if (subs > 1)
-				/*printf(" (%d subdevices)", subs);*/
-			/*putchar('\n');*/
-			break;
-		} else {
-			/*printf("%c%c  hw:%d,%d,%d  %s\n",*/
-			/*       sub < subs_in ? 'I' : ' ',*/
-			/*       sub < subs_out ? 'O' : ' ',*/
-			/*       card, device, sub, sub_name);*/
-			sprintf(dev->hw_string, "hw:%d,%d,%d", card, device, sub);
-			sprintf(dev->hw_name, "%s", sub_name);
-		}
-		amount++;
-	}
-	return amount;
-}
-
-static int list_card_devices(int card, dev_info_t **devs)
-{
-	snd_ctl_t *ctl;
-	char name[32];
-	int device;
-	int err;
-	int amount = 0;
-
-	sprintf(name, "hw:%d", card);
-	if ((err = snd_ctl_open(&ctl, name, 0)) < 0) {
-		error("cannot open control for card %d: %s", card, snd_strerror(err));
-		return 0;
-	}
-	device = -1;
-	for (;;) {
-		if ((err = snd_ctl_rawmidi_next_device(ctl, &device)) < 0) {
-			error("cannot determine device number: %s", snd_strerror(err));
-			break;
-		}
-		if (device < 0)
-			break;
-		amount += list_device(ctl, card, device, devs[device]);
-	}
-	snd_ctl_close(ctl);
-	return amount;
-}
-
-
-/* Essentially amidi -l start point */
-static int device_list(dev_info_t** devs)
-{
-	int card, err, amount = 0;
-
-	card = -1;
-	if ((err = snd_card_next(&card)) < 0) {
-		error("cannot determine card number: %s", snd_strerror(err));
-		return -1;
-	}
-	if (card < 0) {
-		error("no sound card found");
-		return -1;
-	}
-	/*puts("Dir Device    Name");*/
-	do {
-		amount += list_card_devices(card, devs);
-		if ((err = snd_card_next(&card)) < 0) {
-			error("cannot determine card number: %s", snd_strerror(err));
-			break;
-		}
-        if (amount == 5) break;
-	} while (card >= 0);
-    return amount;
-}
-
-dev_info_t** get_axe_midi_devs(int *amount, int *axe_index)
-{
-    dev_info_t **devs;
-    *axe_index = -1;
-
-    devs = (dev_info_t**)malloc(sizeof(dev_info_t*) * 5);
-    devs[0] = (dev_info_t*)malloc(sizeof(dev_info_t) * 5);
-
-    *amount = device_list(devs);
-
-    for (int i = 0; i < *amount; i++) {
-        if (strstr(devs[0]->hw_name, "AXE") != NULL) {
-            *axe_index = i;
-            break;
-        }
-    }
-    return devs;
-}
-
-void free_axe_midi_devs(dev_info_t **devs)
-{
-    free(devs[0]);
-    free(devs);
-    devs = NULL;
 }

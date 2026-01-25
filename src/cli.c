@@ -1,5 +1,5 @@
 /*    cli.c - CLI interface to send/receive data from an Axe-FX II
- *    Copyright (C) 2025  Jamie Drinkell
+ *    Copyright (C) 2025-2026  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "axeii_utils.h"
+#include "axeii_loader.h"
 
 /* ENUMS */
 enum modes { SEND = 1, RECEIVE };
@@ -32,7 +32,7 @@ static void usage() {
     puts("The unit type (-t option) does not autodetect, and transfers may fail if it's incorrect.");
     puts("");
     puts("=== Options ===");
-    puts("-d <device>      ALSA device string. Use 'amidi -l' and pass the \"Device\", e.g. \"hw:2,0\".");
+    puts("-d <device>      The device string as appropriate for the backend. See docs.");
     puts("-i <file name>   Set send mode with given input file (whether it's a preset or IR will be autodetected).");
     puts("-o <file name>   Override the provided file name for receive mode.");
     puts("-m               Set to get IRs in receive mode (ignored for send mode).");
@@ -46,14 +46,14 @@ static char getDevice(char* devString) {
     dev_info_t **devs;
     int amount, index;
     char ret = 0;
-    devs = get_axe_midi_devs(&amount, &index);
+    devs = getAxeMidiDevs(&amount, &index);
 
     if (index >= 0) {
         strcpy(devString, devs[index]->hw_string);
     } else {
         ret = -1;
     }
-    free_axe_midi_devs(devs);
+    freeAxeMidiDevs(devs);
     return ret;
 }
 
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (setupRawMIDIHandles(devString) != 0) {
+    if (initMIDI(devString) != 0) {
         puts("Error opening MIDI device!");
         return 1;
     }
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
         } else if (ret == LOCATION_OOB) {
             puts("Location is out of bounds!");
         }
-        closeRawMIDIHandles();
+        closeMIDI();
     }
     if (ret == 0) puts("Transfer success!\nThank you :)");
     return ret;

@@ -1,5 +1,5 @@
-/*    axeii_utils.h - API header for utilities to send/receive data from an Axe-FX II
- *    Copyright (C) 2025  Jamie Drinkell
+/*    axeii_loader.h - API header for frontends to send/receive data from an Axe-FX II
+ *    Copyright (C) 2025-2026  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 
 #ifndef AXEII_UTILS_H
 #define AXEII_UTILS_H
+
+#include "midi_interface.h"
 
 /* DEFINES */
 /* Transfer Properties */
@@ -59,30 +61,25 @@ enum errors {
     LOCATION_OOB = -5
 };
 
-/* STRUCTS */
-typedef struct DEV_INFO_S {
-    char hw_string[32];
-    char hw_name[120];
-} dev_info_t;
+
 
 /* FUNCTION DECLARATIONS */
-
-/** Sets up the libraries internal RawMIDI handles to the device
- * @param char* devString The ALSA device string as obtained from "amidi -l"
- * @return char 0 on success, -1 on failure
- */
-char setupRawMIDIHandles(char *devString);
-
-/** Closes the libraries previously opened RAWMIDI handles
- * @return char 0 on success
- */
-char closeRawMIDIHandles(void);
 
 /** Detects the properties of the file at the given path
  * @param char* pathToPreset  Path to the preset file (library will open and close it)
  * @return char File properties, see the defines
  */
 char detectFileProperties(char *pathToPreset);
+
+/** User implemented function to allow the library to provide transaction progress.
+ * @param int currentProgress the current progress of the library, from 0 to 100. Negative numbers are passed for header locking.
+ */
+void progressCallback(int currentProgress);
+
+/** User implemented function to allow library to provide the name it saved with at save time.
+ * @param char* name Name of the file that was just saved
+ */
+void nameProvider(char *name);
 
 /** Send a file of the given properties to a location
  * @param char* pathToFile Path to the file to send
@@ -100,26 +97,5 @@ char sendFile(char *pathToFile, unsigned char properties, int location);
  */
 char getFile(char *pathToSave, unsigned char properties, int location);
 
-/** User implemented function to allow the library to provide transaction progress.
- * @param int currentProgress the current progress of the library, from 0 to 100. Negative numbers are passed for header locking.
- */
-void progressCallback(int currentProgress);
-
-/** User implemented function to allow library to provide the name it saved with at save time.
- * @param char* name Name of the file that was just saved
- */
-void nameProvider(char *name);
-
-/** Utility to get a list of MIDI devices, which attempts to detect which one is an Axe-FX II
- * @param amount returns the amount of devices
- * @param axe_index the index of an Axe-FX II MIDI device
- * @return array of midi device info of length "amount"
- */
-dev_info_t** get_axe_midi_devs(int *amount, int *axe_index);
-
-/** Free function for get_axe_midi_devs should the OS implementation need it
- * @param devs array of MIDI devices to be freed
- */
-void free_axe_midi_devs(dev_info_t **devs);
 
 #endif /* AXEII_UTILS_H */

@@ -1,5 +1,5 @@
 /*    ui.c - GUI interface to send/receive data from an Axe-FX II
- *    Copyright (C) 2025  Jamie Drinkell
+ *    Copyright (C) 2025-2026  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <iup.h>
-#include "axeii_utils.h"
+#include "axeii_loader.h"
 
 static enum {
     SEND_MODE = 1,
@@ -56,8 +56,8 @@ void nameProvider(char *name) {
 static void getMidiDevices(Ihandle *list) {
     char buf[32];
     int amount = -1, index = -1;
-    if (devs != NULL) free_axe_midi_devs(devs);
-    devs = get_axe_midi_devs(&amount, &index);
+    if (devs != NULL) freeAxeMidiDevs(devs);
+    devs = getAxeMidiDevs(&amount, &index);
 
     if (amount >= 0) {
         for (int i = 0; i < amount; i++) {
@@ -165,7 +165,7 @@ static int start_cb(Ihandle *ih) {
     IupSetAttribute(ih, "ACTIVE", "NO");
     IupSetAttribute(progressbar, "VALUE", "0");
     midiIndex = atoi(IupGetAttribute(IupGetHandle("midi_dev"), "VALUE")) - 1;
-    ret = setupRawMIDIHandles(devs[midiIndex]->hw_string);
+    ret = initMIDI(devs[midiIndex]->hw_string);
 
     switch (atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1) {
         case 1:
@@ -198,7 +198,7 @@ static int start_cb(Ihandle *ih) {
         }
         ret = getFile(filepath, properties, location);
     }
-    closeRawMIDIHandles();
+    closeMIDI();
 
     if (ret == FILE_ERROR) {
         IupSetAttribute(messagelabel, "TITLE", "Couldn't open file!");
@@ -356,6 +356,6 @@ int main(int argc, char **argv) {
     IupShowXY(dlg, IUP_CENTER, IUP_CENTER);
     IupMainLoop();
     IupClose();
-    if (devs != NULL) free_axe_midi_devs(devs);
+    if (devs != NULL) freeAxeMidiDevs(devs);
     return EXIT_SUCCESS;
 }
