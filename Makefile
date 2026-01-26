@@ -1,5 +1,5 @@
 #  Makefile - Makefile for axeiiloader/axeiiloader-gui
-# Copyright (C) 2025  Jamie Drinkell
+# Copyright (C) 2025-2026 Jamie Drinkell
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,9 +26,15 @@ build_dir:
 	-mkdir build_dir
 
 build_dir/axeiiloader: build_dir/axeii_backend.o build_dir/axeii_loader.o src/cli.c
-	cc src/cli.c build_dir/axeii_backend.o build_dir/axeii_loader.o -o build_dir/axeiiloader \
-	-Wall -Werror -Wextra -Wpedantic -O2 \
-	-lasound
+	NAME=`uname -s` ; \
+	if [ $$NAME = "Linux" ]; then \
+		cc src/cli.c build_dir/axeii_backend.o build_dir/axeii_loader.o -o build_dir/axeiiloader \
+		-Wall -Werror -Wextra -Wpedantic -O2 -lasound ; \
+	fi ; \
+	if [ $$NAME = "FreeBSD" ]; then \
+		cc src/cli.c build_dir/axeii_backend.o build_dir/axeii_loader.o -o build_dir/axeiiloader \
+		-Wall -Werror -Wextra -Wpedantic -O2 ; \
+	fi ;
 
 build_dir/axeiiloader-gui: build_dir/axeii_backend.o build_dir/axeii_loader.o src/ui.c
 	cc src/ui.c build_dir/axeii_backend.o build_dir/axeii_loader.o -o build_dir/axeiiloader-gui \
@@ -37,18 +43,18 @@ build_dir/axeiiloader-gui: build_dir/axeii_backend.o build_dir/axeii_loader.o sr
 	-Wl,-Bdynamic $(gtk3libs) -O2 \
 	-lasound
 
-build_dir/axeii_loader.o: src/axeii_loader.c
-	cc -c src/axeii_loader.c -o build_dir/axeii_loader.o \
-	-Wall -Werror -Wpedantic -O2
-
-# Detect the platform and build ALSA on Linux, or OSS on FreeBSD
 # gcc -O2 optimisations mess up calculating the sysex checksum.
 # TODO: Does Clang have the issue?
-build_dir/axeii_backend.o: src/alsa/axeii_alsa.c src/oss/axeii_oss.c 
+build_dir/axeii_loader.o: src/axeii_loader.c
+	cc -c src/axeii_loader.c -o build_dir/axeii_loader.o \
+	-Wall -Werror -Wpedantic -O1
+
+# Detect the platform and build ALSA on Linux, or OSS on FreeBSD
+build_dir/axeii_backend.o: src/alsa/axeii_alsa.c src/oss/axeii_oss.c
 	NAME=`uname -s` ; \
 	if [ $$NAME = "Linux" ]; then \
 		cc -c src/alsa/axeii_alsa.c -o build_dir/axeii_backend.o \
-		-Wall -Werror -Wextra -Wpedantic -O1 -lasound ; \
+		-Wall -Werror -Wextra -Wpedantic -O2 -lasound ; \
 	fi ; \
 	if [ $$NAME = "FreeBSD" ]; then \
 		cc -c src/alsa/axeii_oss.c -o build_dir/axeii_backend.o \
