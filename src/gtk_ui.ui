@@ -114,7 +114,8 @@
                             <property name="has-entry">True</property>
                             <child internal-child="entry">
                               <object class="GtkEntry">
-                                <property name="can-focus">False</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
                               </object>
                             </child>
                           </object>
@@ -131,7 +132,8 @@
                             <property name="has-entry">True</property>
                             <child internal-child="entry">
                               <object class="GtkEntry">
-                                <property name="can-focus">False</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
                               </object>
                             </child>
                           </object>
@@ -303,7 +305,8 @@
                             <property name="has-entry">True</property>
                             <child internal-child="entry">
                               <object class="GtkEntry">
-                                <property name="can-focus">False</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
                               </object>
                             </child>
                           </object>
