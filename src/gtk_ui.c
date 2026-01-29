@@ -27,6 +27,10 @@ main (int   argc,
       return 1;
     }
 
+	  /* Connect signal handlers to the constructed widgets. */
+  window = gtk_builder_get_object (builder, "window");
+  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
+
 
   gtk_main ();
 
