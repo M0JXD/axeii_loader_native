@@ -1,3 +1,7 @@
+/* COMPILE
+ * cc `pkg-config --cflags gtk+-3.0` -o gtk_test ui_gtk.c `pkg-config --libs gtk+-3.0`
+ */
+
 #include <gtk/gtk.h>
 
 int main(int argc, char *argv[]) {
