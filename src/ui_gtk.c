@@ -3,17 +3,20 @@
  */
 
 #include <gtk/gtk.h>
+#include "gtk/axeiiloader_gtk.h"
 
 int main(int argc, char *argv[]) {
     GtkBuilder *builder;
     GObject *window;
     GObject *button;
     GError *error = NULL;
+    GResource *ui = axeiiloader_gtk_get_resource();
+    g_resources_register(ui);
 
     gtk_init (&argc, &argv);
-
     builder = gtk_builder_new ();
-    if (gtk_builder_add_from_file(builder, "builder.ui", &error) == 0) {
+
+    if (gtk_builder_add_from_resource(builder, "/m0jxd/axeiiloader/builder.ui", &error) == 0) {
         g_printerr("Error loading file: %s\n", error->message);
         g_clear_error(&error);
         return 1;
@@ -25,5 +28,6 @@ int main(int argc, char *argv[]) {
 
     gtk_main();
 
+    g_resources_unregister(ui);
     return 0;
 }

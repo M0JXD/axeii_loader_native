@@ -22,6 +22,8 @@ cli: build_dir build_dir/axeiiloader
 
 gui: build_dir build_dir/axeiiloader-gui
 
+gui_gtk: build_dir build_dir/axeiiloader-gtk
+
 build_dir:
 	-mkdir build_dir
 
@@ -42,6 +44,17 @@ build_dir/axeiiloader-gui: build_dir/axeii_backend.o build_dir/axeii_loader.o sr
 	-I./lib/iup/include -L./lib/iup -Wl,-Bstatic -liup \
 	-Wl,-Bdynamic $(gtk3libs) -O2 \
 	-lasound
+
+build_dir/axeiiloader-gtk: build_dir/axeii_backend.o build_dir/axeii_loader.o src/ui_gtk.c src/gtk/axeiiloader_gtk.c src/gtk/axeiiloader_gtk.h
+	cc `pkg-config --cflags gtk+-3.0` src/ui_gtk.c src/gtk/axeiiloader_gtk.c -o build_dir/axeiiloader-gtk \
+	`pkg-config --libs gtk+-3.0` -lasound
+
+src/gtk/axeiiloader_gtk.c: src/gtk/builder.ui src/gtk/axeiiloader_gtk.gresource.xml
+	glib-compile-resources --generate-source --target=src/gtk/axeiiloader_gtk.c src/gtk/axeiiloader_gtk.gresource.xml
+
+src/gtk/axeiiloader_gtk.h: src/gtk/builder.ui src/gtk/axeiiloader_gtk.gresource.xml
+	glib-compile-resources --generate-header --target=src/gtk/axeiiloader_gtk.h src/gtk/axeiiloader_gtk.gresource.xml
+
 
 # gcc -O2 optimisations mess up calculating the sysex checksum.
 # TODO: Does Clang have the issue?
