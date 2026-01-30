@@ -55,7 +55,6 @@ src/gtk/axeiiloader_gtk.c: src/gtk/builder.ui src/gtk/axeiiloader_gtk.gresource.
 src/gtk/axeiiloader_gtk.h: src/gtk/builder.ui src/gtk/axeiiloader_gtk.gresource.xml
 	glib-compile-resources --generate-header --target=src/gtk/axeiiloader_gtk.h src/gtk/axeiiloader_gtk.gresource.xml
 
-
 # gcc -O2 optimisations mess up calculating the sysex checksum.
 # TODO: Does Clang have the issue?
 build_dir/axeii_loader.o: src/axeii_loader.c
