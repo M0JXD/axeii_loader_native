@@ -11,7 +11,7 @@ static enum {
 } mode = SEND_MODE;
 
 static dev_info_t **devs = NULL;
-static GObject *mididevs, *type,
+static GObject *mididevs, *type, *tabs,
                *sendfile, *sendloc, *senddetail, *recdir, *recloc, *rectype,
                *messagelabel, *progressbar, *startbutton;
 
@@ -20,59 +20,71 @@ void progressCallback(int currentProgress) {
     char valAsString[16];
     sprintf(valAsString, "%d", currentProgress);
     if (currentProgress >= 0) {
-        /*IupSetAttribute(messagelabel, "TITLE", "Doing transfer...");*/
-        /*IupSetAttribute(progressbar, "VALUE", valAsString);*/
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Doing transfer...");
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), ((gdouble)currentProgress) / 100);
     } else if (currentProgress < 0) {
-        /*IupSetAttribute(messagelabel, "TITLE", "Trying to capture header...");*/
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
     }
     if (currentProgress == 100) {
-        /*IupSetAttribute(messagelabel, "TITLE", "Transfer complete!");*/
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
     }
 }
 
 void nameProvider(char *name) {
     char buf[256];
     sprintf(buf, "File saved as %s", name);
-    /*IupSetAttribute(messagelabel, "TITLE", buf);*/
+    gtk_label_set_text(GTK_LABEL(messagelabel), buf);
 }
 
 /* Utility */
 void setLocationMinimums() {
     /*  */
     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
+
 }
 
 void canEnableStart() {
-
+    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
+    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
 }
 
 /* Callbacks */
 
-void type_cb() {
-    setLocationMinimums();
-}
-
-void midi_cb() {
+void midi_cb(GtkComboBox* self, gpointer user_data) {
+    g_print("In midi_cb\n");
     canEnableStart();
 }
 
-void tabs_cb() {
-
+void type_cb(GtkComboBox* self, gpointer user_data) {
+    g_print("In type_cb\n");
+    setLocationMinimums();
+    canEnableStart();
 }
 
-void file_cb() {
-
+void tabs_cb(GtkNotebook* self, GtkWidget* page, guint page_num, gpointer user_data) {
+    g_print("In tabs_cb\n");
+    mode = page_num;
+    canEnableStart();
 }
 
-void dir_cb() {
-
+void file_cb(GtkFileChooserButton* self, gpointer user_data) {
+    g_print("In file_cb\n");
+    canEnableStart();
 }
 
-void rectype_cb() {
+void dir_cb(GtkFileChooserButton* self, gpointer user_data) {
+    g_print("In dir_cb\n");
+    canEnableStart();
+}
+
+void rectype_cb(GtkToggleButton* self, gpointer user_data) {
+    g_print("In rectype_cb\n");
     setLocationMinimums();
 }
 
-void start_cb() {
+void start_cb(GtkButton* self, gpointer user_data) {
+    g_print("In start_cb\n");
+    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
 }
 
@@ -90,6 +102,7 @@ int main(int argc, char *argv[]) {
     /* Set globally accessed widgets */
     mididevs     = gtk_builder_get_object(builder, "mididevs");
     type         = gtk_builder_get_object(builder, "type");
+    tabs         = gtk_builder_get_object(builder, "tabs");
     sendfile     = gtk_builder_get_object(builder, "sendfile");
     sendloc      = gtk_builder_get_object(builder, "sendloc");
     senddetail   = gtk_builder_get_object(builder, "senddetail");
@@ -104,10 +117,17 @@ int main(int argc, char *argv[]) {
     window = gtk_builder_get_object(builder, "window");
 
     /* Connect callbacks */
-    window = gtk_builder_get_object(builder, "window");
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(mididevs, "changed", G_CALLBACK(midi_cb), NULL);
+    g_signal_connect(type, "changed", G_CALLBACK(type_cb), NULL);
+    g_signal_connect(tabs, "switch-page", G_CALLBACK(tabs_cb), NULL);
+    g_signal_connect(sendfile, "file-set", G_CALLBACK(file_cb), NULL);
+    g_signal_connect(recdir, "file-set", G_CALLBACK(dir_cb), NULL);
+    g_signal_connect(rectype, "toggled", G_CALLBACK(rectype_cb), NULL);
+    g_signal_connect(startbutton, "clicked", G_CALLBACK(start_cb), NULL);
 
     /* NB: Using the procedural style gtk_main() is not supported in GTK4 */
+    /* So I will need to upgrade to g_application_run on the GtkApplication */
     gtk_main();
 
     g_resources_unregister(ui);

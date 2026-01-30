@@ -46,7 +46,7 @@
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <child>
-                      <object class="GtkMenuItem">
+                      <object class="GtkMenuItem" id="about">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="label" translatable="yes">About</property>
@@ -208,6 +208,9 @@
                           <object class="GtkProgressBar" id="progressbar">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
+                            <property name="margin-left">8</property>
+                            <property name="margin-right">8</property>
+                            <property name="ellipsize">start</property>
                           </object>
                           <packing>
                             <property name="left-attach">0</property>
@@ -230,7 +233,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkNotebook">
+                  <object class="GtkNotebook" id="tabs">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <child>
