@@ -5,6 +5,7 @@
   <object class="GtkApplicationWindow" id="window">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
+    <property name="title" translatable="yes">Axe-FX II Loader</property>
     <property name="resizable">False</property>
     <property name="window-position">center</property>
     <property name="destroy-with-parent">True</property>
@@ -109,7 +110,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBoxText" id="comboboxtext1">
+                          <object class="GtkComboBoxText">
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="hexpand">True</property>
@@ -131,13 +132,12 @@
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="hexpand">True</property>
-                            <property name="has-entry">True</property>
-                            <child internal-child="entry">
-                              <object class="GtkEntry">
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                              </object>
-                            </child>
+                            <property name="active">0</property>
+                            <items>
+                              <item id="&lt;Enter ID&gt;" translatable="yes">OG/MKII</item>
+                              <item translatable="yes">XL</item>
+                              <item translatable="yes">XL Plus</item>
+                            </items>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
@@ -293,32 +293,24 @@
                             <property name="can-focus">False</property>
                             <property name="halign">start</property>
                             <property name="hexpand">True</property>
-                            <property name="label" translatable="yes">No file Selected.</property>
+                            <property name="label" translatable="yes">No File Selected.</property>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
                             <property name="top-attach">2</property>
+                            <property name="width">2</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBoxText">
+                          <object class="GtkEntry">
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
-                            <property name="has-entry">True</property>
-                            <child internal-child="entry">
-                              <object class="GtkEntry">
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                              </object>
-                            </child>
+                            <property name="hexpand">True</property>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
                             <property name="top-attach">0</property>
                           </packing>
-                        </child>
-                        <child>
-                          <placeholder/>
                         </child>
                         <child>
                           <placeholder/>
@@ -371,25 +363,6 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBox">
-                            <property name="visible">True</property>
-                            <property name="can-focus">True</property>
-                            <property name="hexpand">True</property>
-                            <property name="has-entry">True</property>
-                            <child internal-child="entry">
-                              <object class="GtkEntry">
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                                <property name="hexpand">True</property>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="left-attach">1</property>
-                            <property name="top-attach">0</property>
-                          </packing>
-                        </child>
-                        <child>
                           <object class="GtkButton">
                             <property name="label" translatable="yes">Browse</property>
                             <property name="visible">True</property>
@@ -427,6 +400,17 @@
                             <property name="left-attach">0</property>
                             <property name="top-attach">2</property>
                             <property name="width">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEntry">
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="hexpand">True</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">0</property>
                           </packing>
                         </child>
                         <child>
@@ -471,21 +455,6 @@
               <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="orientation">vertical</property>
-                <child>
-                  <placeholder/>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkBox">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
                 <property name="margin-top">8</property>
                 <property name="margin-bottom">8</property>
                 <child>
@@ -509,7 +478,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="position">1</property>
               </packing>
             </child>
           </object>
