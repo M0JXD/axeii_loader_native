@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     gtk_init (&argc, &argv);
 
     builder = gtk_builder_new ();
-    if (gtk_builder_add_from_file(builder, "gtk_ui.ui", &error) == 0) {
+    if (gtk_builder_add_from_file(builder, "builder.ui", &error) == 0) {
         g_printerr("Error loading file: %s\n", error->message);
         g_clear_error(&error);
         return 1;
@@ -18,7 +18,6 @@ int main(int argc, char *argv[]) {
     /* Connect signal handlers to the constructed widgets. */
     window = gtk_builder_get_object(builder, "window");
     g_signal_connect(window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
-
 
     gtk_main();
 
