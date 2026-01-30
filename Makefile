@@ -81,7 +81,7 @@ cli-tcc: build_dir
 
 clean:
 	rm -r build_dir
-	rm *.syx
+	rm *.syx src/gtk/axeiiloader_gtk.c src/gtk/axeiiloader_gtk.h
 
 # Run various scenarios that should pass
 run:
