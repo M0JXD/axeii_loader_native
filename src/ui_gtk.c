@@ -14,13 +14,7 @@ int main(int argc, char *argv[]) {
     g_resources_register(ui);
 
     gtk_init (&argc, &argv);
-    builder = gtk_builder_new ();
-
-    if (gtk_builder_add_from_resource(builder, "/m0jxd/axeiiloader/builder.ui", &error) == 0) {
-        g_printerr("Error loading file: %s\n", error->message);
-        g_clear_error(&error);
-        return 1;
-    }
+    builder = gtk_builder_new_from_resource ("/m0jxd/axeiiloader/builder.ui");
 
     /* Connect signal handlers to the constructed widgets. */
     window = gtk_builder_get_object(builder, "window");
