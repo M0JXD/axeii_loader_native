@@ -5,25 +5,78 @@
 #include "gtk/axeiiloader_gtk.h"
 #include "axeii_loader.h"
 
+static enum {
+    SEND_MODE = 1,
+    RECEIVE_MODE
+} mode = SEND_MODE;
+
 static dev_info_t **devs = NULL;
 static GObject *mididevs, *type,
-               *sendfile, *sendloc, *senddetail, *recdir, *recloc,
+               *sendfile, *sendloc, *senddetail, *recdir, *recloc, *rectype,
                *messagelabel, *progressbar, *startbutton;
 
 /* Required by axeii_utils */
 void progressCallback(int currentProgress) {
-
+    char valAsString[16];
+    sprintf(valAsString, "%d", currentProgress);
+    if (currentProgress >= 0) {
+        /*IupSetAttribute(messagelabel, "TITLE", "Doing transfer...");*/
+        /*IupSetAttribute(progressbar, "VALUE", valAsString);*/
+    } else if (currentProgress < 0) {
+        /*IupSetAttribute(messagelabel, "TITLE", "Trying to capture header...");*/
+    }
+    if (currentProgress == 100) {
+        /*IupSetAttribute(messagelabel, "TITLE", "Transfer complete!");*/
+    }
 }
 
-/* Required by axeii_utils */
 void nameProvider(char *name) {
     char buf[256];
     sprintf(buf, "File saved as %s", name);
+    /*IupSetAttribute(messagelabel, "TITLE", buf);*/
+}
+
+/* Utility */
+void setLocationMinimums() {
+    /*  */
+    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
+}
+
+void canEnableStart() {
+
 }
 
 /* Callbacks */
 
+void type_cb() {
+    setLocationMinimums();
+}
 
+void midi_cb() {
+    canEnableStart();
+}
+
+void tabs_cb() {
+
+}
+
+void file_cb() {
+
+}
+
+void dir_cb() {
+
+}
+
+void rectype_cb() {
+    setLocationMinimums();
+}
+
+void start_cb() {
+    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
+}
+
+/* MAIN */
 
 int main(int argc, char *argv[]) {
     GtkBuilder *builder;
@@ -42,6 +95,7 @@ int main(int argc, char *argv[]) {
     senddetail   = gtk_builder_get_object(builder, "senddetail");
     recdir       = gtk_builder_get_object(builder, "recdir");
     recloc       = gtk_builder_get_object(builder, "recloc");
+    rectype      = gtk_builder_get_object(builder, "rectype");
     messagelabel = gtk_builder_get_object(builder, "messagelabel");
     progressbar  = gtk_builder_get_object(builder, "progressbar");
     startbutton  = gtk_builder_get_object(builder, "startbutton");
