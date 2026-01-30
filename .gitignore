@@ -3,3 +3,5 @@ build_dir/*
 test_files/*
 *.syx
 src/gtk_ui.ui~
+src/gtk/axeiiloader_gtk.h
+src/gtk/axeiiloader_gtk.c
