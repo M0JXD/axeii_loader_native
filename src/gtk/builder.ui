@@ -287,11 +287,13 @@
                         <child>
                           <object class="GtkSpinButton" id="sendloc">
                             <property name="visible">True</property>
+                            <property name="sensitive">False</property>
                             <property name="can-focus">True</property>
                             <property name="hexpand">True</property>
                             <property name="max-width-chars">3</property>
                             <property name="adjustment">sendadjust</property>
                             <property name="numeric">True</property>
+                            <property name="update-policy">if-valid</property>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
@@ -381,6 +383,7 @@
                             <property name="input-purpose">digits</property>
                             <property name="adjustment">recadjust</property>
                             <property name="numeric">True</property>
+                            <property name="update-policy">if-valid</property>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>

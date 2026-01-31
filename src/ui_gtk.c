@@ -6,14 +6,17 @@
 #include "axeii_loader.h"
 
 static enum {
-    SEND_MODE = 1,
+    SEND_MODE = 0,
     RECEIVE_MODE
 } mode = SEND_MODE;
 
 static dev_info_t **devs = NULL;
 static GObject *mididevs, *type, *tabs,
                *sendfile, *sendloc, *senddetail, *recdir, *recloc, *rectype,
-               *messagelabel, *progressbar, *startbutton;
+               *messagelabel, *progressbar, *startbutton,
+               *sendadjust, *recadjust;
+
+gchar path[256];
 
 /* Required by axeii_utils */
 void progressCallback(int currentProgress) {
@@ -25,6 +28,7 @@ void progressCallback(int currentProgress) {
     } else if (currentProgress < 0) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
     }
+
     if (currentProgress == 100) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
     }
@@ -36,29 +40,23 @@ void nameProvider(char *name) {
     gtk_label_set_text(GTK_LABEL(messagelabel), buf);
 }
 
-/* Utility */
-void setLocationMinimums() {
-    /*  */
-    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
-
-}
-
 void checkAndEnable() {
-    unsigned char passed_checks = 1;
-    char *path, properties;
+    char passed_checks = 1, properties;
+    gchar *path, *midi, *axe_type;
 
-    /* Check 1: Is MIDI device valid */
-    passed_checks = 0;
+    axe_type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
 
+    /* Check file is valid */
     if (mode == SEND_MODE) {
         path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile));
     } else {
-        /* Check 2: Is a directory path valid for receive mode */
+        /* Is a directory path valid for receive mode */
         path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(recdir));
-        if (path == NULL) passed_checks = 0;
     }
+    if (path == NULL) passed_checks = 0;
 
-    /* Check 3: If in send mode, is the file at the given path valid? */
+    /* If in send mode, is the file at the given path valid? */
+    /* Also constrain IR send locations */
     if (mode == SEND_MODE && passed_checks) {
         properties = detectFileProperties(path);
         if ((properties == FILE_ERROR) || !(properties & IS_VALID)) {
@@ -71,8 +69,40 @@ void checkAndEnable() {
         } else {
             gtk_widget_set_sensitive(GTK_WIDGET(sendloc), TRUE);
             gtk_label_set_text(GTK_LABEL(senddetail), "IR File Detected");
+            gtk_adjustment_set_lower(GTK_ADJUSTMENT(sendadjust), 1.0);
+            if (axe_type[0] == 'O') {
+                gtk_adjustment_set_upper(GTK_ADJUSTMENT(sendadjust), 104.0);
+            } else {
+                gtk_adjustment_set_upper(GTK_ADJUSTMENT(sendadjust), 1028.0);
+            }
+            gtk_adjustment_set_value(GTK_ADJUSTMENT(sendadjust),
+                                     gtk_adjustment_get_value(GTK_ADJUSTMENT(sendadjust)));
         }
     }
+
+    /* Constrain receive locations */
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype))) {
+        /* PRESET */
+        gtk_adjustment_set_lower(GTK_ADJUSTMENT(recadjust), 0.0);
+        if (axe_type[0] == 'O') {
+            gtk_adjustment_set_upper(GTK_ADJUSTMENT(recadjust), 383.0);
+        } else {
+            gtk_adjustment_set_upper(GTK_ADJUSTMENT(recadjust), 767.0);
+        }
+    } else {
+        /* IR */
+        gtk_adjustment_set_lower(GTK_ADJUSTMENT(recadjust), 1.0);
+        if (axe_type[0] == 'O') {
+            gtk_adjustment_set_upper(GTK_ADJUSTMENT(recadjust), 100.0);
+        } else {
+            gtk_adjustment_set_upper(GTK_ADJUSTMENT(recadjust), 1024.0);
+        }
+    }
+    gtk_adjustment_set_value(GTK_ADJUSTMENT(recadjust),
+                             gtk_adjustment_get_value(GTK_ADJUSTMENT(recadjust)));
+
+    /* Is MIDI device valid */
+    passed_checks = 0;
 
     if (passed_checks) {
         gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
@@ -83,14 +113,8 @@ void checkAndEnable() {
 
 /* Callbacks */
 
-void midi_cb(GtkComboBox* self, gpointer user_data) {
+void box_cb(GtkComboBox* self, gpointer user_data) {
     /*g_print("In midi_cb\n");*/
-    checkAndEnable();
-}
-
-void type_cb(GtkComboBox* self, gpointer user_data) {
-    /*g_print("In type_cb\n");*/
-    setLocationMinimums();
     checkAndEnable();
 }
 
@@ -105,14 +129,9 @@ void file_cb(GtkFileChooserButton* self, gpointer user_data) {
     checkAndEnable();
 }
 
-void dir_cb(GtkFileChooserButton* self, gpointer user_data) {
-    /*g_print("In dir_cb\n");*/
-    checkAndEnable();
-}
-
 void rectype_cb(GtkToggleButton* self, gpointer user_data) {
     /*g_print("In rectype_cb\n");*/
-    setLocationMinimums();
+    checkAndEnable();
 }
 
 void start_cb(GtkButton* self, gpointer user_data) {
@@ -136,7 +155,7 @@ int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
     builder = gtk_builder_new_from_resource("/m0jxd/axeiiloader/builder.ui");
 
-    /* Set globally accessed widgets */
+    /* Setup widgets from builder */
     mididevs     = gtk_builder_get_object(builder, "mididevs");
     type         = gtk_builder_get_object(builder, "type");
     tabs         = gtk_builder_get_object(builder, "tabs");
@@ -149,17 +168,17 @@ int main(int argc, char *argv[]) {
     messagelabel = gtk_builder_get_object(builder, "messagelabel");
     progressbar  = gtk_builder_get_object(builder, "progressbar");
     startbutton  = gtk_builder_get_object(builder, "startbutton");
-
-    /* Locally accessed widgets */
-    window = gtk_builder_get_object(builder, "window");
+    sendadjust   = gtk_builder_get_object(builder, "sendadjust");
+    recadjust    = gtk_builder_get_object(builder, "recadjust");
+    window       = gtk_builder_get_object(builder, "window");
 
     /* Connect callbacks */
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-    g_signal_connect(mididevs, "changed", G_CALLBACK(midi_cb), NULL);
-    g_signal_connect(type, "changed", G_CALLBACK(type_cb), NULL);
+    g_signal_connect(mididevs, "changed", G_CALLBACK(box_cb), NULL);
+    g_signal_connect(type, "changed", G_CALLBACK(box_cb), NULL);
     g_signal_connect(tabs, "switch-page", G_CALLBACK(tabs_cb), NULL);
     g_signal_connect(sendfile, "file-set", G_CALLBACK(file_cb), NULL);
-    g_signal_connect(recdir, "file-set", G_CALLBACK(dir_cb), NULL);
+    g_signal_connect(recdir, "file-set", G_CALLBACK(file_cb), NULL);
     g_signal_connect(rectype, "toggled", G_CALLBACK(rectype_cb), NULL);
     g_signal_connect(startbutton, "clicked", G_CALLBACK(start_cb), NULL);
 
