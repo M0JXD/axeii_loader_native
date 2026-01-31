@@ -46,7 +46,8 @@ build_dir/axeiiloader-gui: build_dir/axeii_backend.o build_dir/axeii_loader.o sr
 	-lasound
 
 build_dir/axeiiloader-gtk: build_dir/axeii_backend.o build_dir/axeii_loader.o src/ui_gtk.c src/gtk/axeiiloader_gtk.c src/gtk/axeiiloader_gtk.h
-	cc `pkg-config --cflags gtk+-3.0` src/ui_gtk.c src/gtk/axeiiloader_gtk.c -o build_dir/axeiiloader-gtk \
+	cc `pkg-config --cflags gtk+-3.0` src/ui_gtk.c src/gtk/axeiiloader_gtk.c build_dir/axeii_backend.o build_dir/axeii_loader.o \
+	-o build_dir/axeiiloader-gtk \
 	`pkg-config --libs gtk+-3.0` -lasound
 
 src/gtk/axeiiloader_gtk.c: src/gtk/builder.ui src/gtk/axeiiloader_gtk.gresource.xml
