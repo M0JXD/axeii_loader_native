@@ -1,4 +1,4 @@
-/*    ui.c - GUI interface to send/receive data from an Axe-FX II
+/*    ui.c - IUP GUI interface to send/receive data from an Axe-FX II
  *    Copyright (C) 2025-2026  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -50,7 +50,6 @@ void nameProvider(char *name) {
     char buf[256];
     sprintf(buf, "File saved as %s", name);
     IupSetAttribute(messagelabel, "TITLE", buf);
-
 }
 
 static void getMidiDevices(Ihandle *list) {
