@@ -28,12 +28,11 @@ static enum {
 } mode = SEND_MODE;
 
 static dev_info_t **devs = NULL;
+static int amount = 0;
 static GObject *mididevs, *type, *tabs,
                *sendfile, *sendloc, *senddetail, *recdir, *recloc, *rectype,
                *messagelabel, *progressbar, *startbutton,
                *sendadjust, *recadjust;
-
-gchar path[256];
 
 /* Required by axeii_utils */
 void progressCallback(int currentProgress) {
@@ -149,20 +148,20 @@ void rectype_cb(GtkToggleButton* self, gpointer user_data) {
 }
 
 void start_cb(GtkButton* self, gpointer user_data) {
-    char properties = 0, ret, *axe_type, path[256];
+    char properties = 0, ret, *str, path[256];
     int location;
     gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), 0.0);
 
-    axe_type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
+    str = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
 
     properties |= IS_OG_UNIT;
-    switch (axe_type[0]) {
+    switch (str[0]) {
         case 'O':
             properties |= IS_OG_UNIT;
         break;
         case 'X':
-            if (strlen(axe_type) > 5) {
+            if (strlen(str) > 5) {
                 properties |= IS_XLP_UNIT;
             } else {
                 properties |= IS_XL_UNIT;
@@ -171,7 +170,16 @@ void start_cb(GtkButton* self, gpointer user_data) {
     }
 
     gtk_label_set_text(GTK_LABEL(messagelabel), "Starting Transfer...");
-    /*ret = initMIDI(devs[midiIndex]->hw_string);*/
+
+    int midiIndex;
+    str = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(mididevs));
+    for (midiIndex = 0; midiIndex < amount; midiIndex++) {
+        if(!strcmp(str, devs[midiIndex]->hw_name)) {
+            break;
+        }
+    }
+
+    ret = initMIDI(devs[midiIndex]->hw_string);
     if (mode == SEND_MODE) {
         strcpy(path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile)));
         location = gtk_adjustment_get_value(GTK_ADJUSTMENT(sendadjust));
@@ -190,7 +198,7 @@ void start_cb(GtkButton* self, gpointer user_data) {
         }
         ret = getFile(path, properties, location);
     }
-    /*closeMIDI();*/
+    closeMIDI();
 
     if (ret == FILE_ERROR) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't open file!");
@@ -202,13 +210,13 @@ void start_cb(GtkButton* self, gpointer user_data) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "File and/or values are not valid!");
     }
 
-    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
+    checkAndEnable();
 }
 
 /* MAIN */
 
 int main(int argc, char *argv[]) {
-    int amount = -1, index = 0;
+    int index = 0;
     GtkBuilder *builder;
     GObject *window;
     GResource *ui = axeiiloader_gtk_get_resource();
@@ -241,7 +249,7 @@ int main(int argc, char *argv[]) {
     if (amount > 0) {
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(mididevs), devs[index]->hw_name);
         if (amount > 1) {
-            for (int i = 0; i < amount - index; i++) {
+            for (int i = 0; i < amount; i++) {
                 if (amount != index) {
                     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(mididevs), devs[i]->hw_name);
                 }
