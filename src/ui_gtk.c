@@ -43,47 +43,84 @@ void setLocationMinimums() {
 
 }
 
-void canEnableStart() {
-    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
-    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
+void checkAndEnable() {
+    unsigned char passed_checks = 1;
+    char *path, properties;
+
+    /* Check 1: Is MIDI device valid */
+    passed_checks = 0;
+
+    if (mode == SEND_MODE) {
+        path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile));
+    } else {
+        /* Check 2: Is a directory path valid for receive mode */
+        path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(recdir));
+        if (path == NULL) passed_checks = 0;
+    }
+
+    /* Check 3: If in send mode, is the file at the given path valid? */
+    if (mode == SEND_MODE && passed_checks) {
+        properties = detectFileProperties(path);
+        if ((properties == FILE_ERROR) || !(properties & IS_VALID)) {
+            gtk_widget_set_sensitive(GTK_WIDGET(sendloc), FALSE);
+            gtk_label_set_text(GTK_LABEL(senddetail), "Type could not be detected");
+            passed_checks = 0;
+        } else if (properties & IS_PRESET) {
+            gtk_widget_set_sensitive(GTK_WIDGET(sendloc), FALSE);
+            gtk_label_set_text(GTK_LABEL(senddetail), "Preset File Detected");
+        } else {
+            gtk_widget_set_sensitive(GTK_WIDGET(sendloc), TRUE);
+            gtk_label_set_text(GTK_LABEL(senddetail), "IR File Detected");
+        }
+    }
+
+    if (passed_checks) {
+        gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
+    } else {
+        gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
+    }
 }
 
 /* Callbacks */
 
 void midi_cb(GtkComboBox* self, gpointer user_data) {
-    g_print("In midi_cb\n");
-    canEnableStart();
+    /*g_print("In midi_cb\n");*/
+    checkAndEnable();
 }
 
 void type_cb(GtkComboBox* self, gpointer user_data) {
-    g_print("In type_cb\n");
+    /*g_print("In type_cb\n");*/
     setLocationMinimums();
-    canEnableStart();
+    checkAndEnable();
 }
 
 void tabs_cb(GtkNotebook* self, GtkWidget* page, guint page_num, gpointer user_data) {
-    g_print("In tabs_cb\n");
+    /*g_print("In tabs_cb\n");*/
     mode = page_num;
-    canEnableStart();
+    checkAndEnable();
 }
 
 void file_cb(GtkFileChooserButton* self, gpointer user_data) {
-    g_print("In file_cb\n");
-    canEnableStart();
+    /*g_print("In file_cb\n");*/
+    checkAndEnable();
 }
 
 void dir_cb(GtkFileChooserButton* self, gpointer user_data) {
-    g_print("In dir_cb\n");
-    canEnableStart();
+    /*g_print("In dir_cb\n");*/
+    checkAndEnable();
 }
 
 void rectype_cb(GtkToggleButton* self, gpointer user_data) {
-    g_print("In rectype_cb\n");
+    /*g_print("In rectype_cb\n");*/
     setLocationMinimums();
 }
 
 void start_cb(GtkButton* self, gpointer user_data) {
-    g_print("In start_cb\n");
+    /*g_print("In start_cb\n");*/
+
+    /* The library expects a trailing / on directory names */
+    /*strcat(filepath, "/");*/
+
     gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
 }
