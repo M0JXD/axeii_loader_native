@@ -59,7 +59,7 @@ void nameProvider(char *name) {
 
 void checkAndEnable() {
     char passed_checks = 1, properties;
-    gchar *path, *midi, *axe_type;
+    gchar *path, *axe_type;
 
     axe_type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
 
@@ -149,7 +149,7 @@ void rectype_cb(GtkToggleButton* self, gpointer user_data) {
 }
 
 void start_cb(GtkButton* self, gpointer user_data) {
-    char properties, ret, *axe_type, path[256];
+    char properties = 0, ret, *axe_type, path[256];
     int location;
     gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), 0.0);
