@@ -179,7 +179,7 @@ void start_cb(GtkButton* self, gpointer user_data) {
         }
     }
 
-    ret = initMIDI(devs[midiIndex]->hw_string);
+    initMIDI(devs[midiIndex]->hw_string);
     if (mode == SEND_MODE) {
         strcpy(path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile)));
         location = gtk_adjustment_get_value(GTK_ADJUSTMENT(sendadjust));
