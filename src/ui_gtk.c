@@ -119,7 +119,9 @@ void checkAndEnable() {
                              gtk_adjustment_get_value(GTK_ADJUSTMENT(recadjust)));
 
     /* Is MIDI device valid */
-    passed_checks = 0;
+    if (devs == NULL) {
+        passed_checks = 0;
+    }
 
     if (passed_checks) {
         gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
@@ -129,45 +131,91 @@ void checkAndEnable() {
 }
 
 /* Callbacks */
-
 void box_cb(GtkComboBox* self, gpointer user_data) {
-    /*g_print("In midi_cb\n");*/
     checkAndEnable();
 }
 
 void tabs_cb(GtkNotebook* self, GtkWidget* page, guint page_num, gpointer user_data) {
-    /*g_print("In tabs_cb\n");*/
     mode = page_num;
     checkAndEnable();
 }
 
 void file_cb(GtkFileChooserButton* self, gpointer user_data) {
-    /*g_print("In file_cb\n");*/
     checkAndEnable();
 }
 
 void rectype_cb(GtkToggleButton* self, gpointer user_data) {
-    /*g_print("In rectype_cb\n");*/
     checkAndEnable();
 }
 
 void start_cb(GtkButton* self, gpointer user_data) {
-    /*g_print("In start_cb\n");*/
-
-    /* The library expects a trailing / on directory names */
-    /*strcat(filepath, "/");*/
-
+    char properties, ret, *axe_type, path[256];
+    int location;
     gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
-    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), 0.0);
+
+    axe_type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
+
+    properties |= IS_OG_UNIT;
+    switch (axe_type[0]) {
+        case 'O':
+            properties |= IS_OG_UNIT;
+        break;
+        case 'X':
+            if (strlen(axe_type) > 5) {
+                properties |= IS_XLP_UNIT;
+            } else {
+                properties |= IS_XL_UNIT;
+            }
+        break;
+    }
+
+    gtk_label_set_text(GTK_LABEL(messagelabel), "Starting Transfer...");
+    /*ret = initMIDI(devs[midiIndex]->hw_string);*/
+    if (mode == SEND_MODE) {
+        strcpy(path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile)));
+        location = gtk_adjustment_get_value(GTK_ADJUSTMENT(sendadjust));
+        properties = detectFileProperties(path) | (properties & CLEAR_FILE);
+        ret = sendFile(path, properties, location);
+    } else {
+        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
+        strcpy(path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(recdir)));
+        strcat(path, "/");  /* The library expects a trailing / on directory names */
+        location = gtk_adjustment_get_value(GTK_ADJUSTMENT(recadjust));
+        properties |= IS_VALID;
+        if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype))) {
+            properties |= IS_PRESET;
+        } else {
+            properties &= SET_IR;
+        }
+        ret = getFile(path, properties, location);
+    }
+    /*closeMIDI();*/
+
+    if (ret == FILE_ERROR) {
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't open file!");
+    } else if (ret == DESTINATION_UNIT_INVALID) {
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Can't send XL/XL+ file to OG/MKII!");
+    } else if (ret == HEADER_LOCK_ISSUE) {
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't lock onto header!");
+    } else if (ret == PROPERTIES_INVALID) {
+        gtk_label_set_text(GTK_LABEL(messagelabel), "File and/or values are not valid!");
+    }
+
+    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
 }
 
 /* MAIN */
 
 int main(int argc, char *argv[]) {
+    int amount = -1, index = 0;
     GtkBuilder *builder;
     GObject *window;
     GResource *ui = axeiiloader_gtk_get_resource();
     g_resources_register(ui);
+
+    if (devs != NULL) freeAxeMidiDevs(devs);
+    devs = getAxeMidiDevs(&amount, &index);
 
     gtk_init(&argc, &argv);
     builder = gtk_builder_new_from_resource("/m0jxd/axeiiloader/builder.ui");
@@ -189,6 +237,18 @@ int main(int argc, char *argv[]) {
     recadjust    = gtk_builder_get_object(builder, "recadjust");
     window       = gtk_builder_get_object(builder, "window");
 
+    /* Add midi devices to list */
+    if (amount > 0) {
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(mididevs), devs[index]->hw_name);
+        if (amount > 1) {
+            for (int i = 0; i < amount - index; i++) {
+                if (amount != index) {
+                    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(mididevs), devs[i]->hw_name);
+                }
+            }
+        }
+    }
+
     /* Connect callbacks */
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     g_signal_connect(mididevs, "changed", G_CALLBACK(box_cb), NULL);
@@ -202,7 +262,8 @@ int main(int argc, char *argv[]) {
     /* NB: Using the procedural style gtk_main() is not supported in GTK4 */
     /* So I will need to upgrade to g_application_run on the GtkApplication */
     gtk_main();
-
+    freeAxeMidiDevs(devs);
+    devs = NULL;
     g_resources_unregister(ui);
     return 0;
 }
