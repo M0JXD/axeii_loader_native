@@ -57,29 +57,14 @@ The GUI should hopefully be quite obvious to use. Here's a screenshot:
 
 ![screenshot](assets/screenshot.png)
 
+The GUI is made using GTK3, which should work well everywhere.
+I'm waiting to see what the likes of Cinnamon and XFCE do before making a GTK4 UI.
+
 ## Building
 
 Run `make` and it will build into a folder it creates called `build_dir`. By default it will build both the CLI and GUI programs, although you can specify either `cli` or `gui` targets.
 
-The only dependencies are ALSA (on Debian based this can be got with `sudo apt install libasound2-dev`) and IUP (if building the GUI frontend).
-
-IUP's pre-compiled library and include headers are expected to be present under the lib/iup directory. It is not checked into git so you will need to add it.
-Download IUP [here](https://sourceforge.net/projects/iup/files/3.32/Linux%20Libraries/iup-3.32_Linux68_64_lib.tar.gz/download) and extract it into the folder, so that:
-
-```
-src/
-    axeii_utils.c
-    cli.c
-    ui.c
-    ...
-lib/
-    iup/
-        libiup.a
-        libiup.so
-        include/
-            iup.h
-...
-```
+The only dependencies are ALSA (on Debian based this can be got with `sudo apt install libasound2-dev`) and GTK3 if building the UI version.
 
 ## License
 

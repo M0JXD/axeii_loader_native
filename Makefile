@@ -14,15 +14,11 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-gtk3libs := -lgtk-3 -lgdk-3 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -lglib-2.0 -lXext -lX11 -lm
-
 all: cli gui
 
 cli: build_dir build_dir/axeiiloader
 
 gui: build_dir build_dir/axeiiloader-gui
-
-gui_gtk: build_dir build_dir/axeiiloader-gtk
 
 build_dir:
 	-mkdir build_dir
@@ -38,16 +34,9 @@ build_dir/axeiiloader: build_dir/axeii_backend.o build_dir/axeii_loader.o src/cl
 		-Wall -Werror -Wextra -Wpedantic -O2 ; \
 	fi ;
 
-build_dir/axeiiloader-gui: build_dir/axeii_backend.o build_dir/axeii_loader.o src/ui.c
-	cc src/ui.c build_dir/axeii_backend.o build_dir/axeii_loader.o -o build_dir/axeiiloader-gui \
-	-Wall -Werror -Wpedantic \
-	-I./lib/iup/include -L./lib/iup -Wl,-Bstatic -liup \
-	-Wl,-Bdynamic $(gtk3libs) -O2 \
-	-lasound
-
-build_dir/axeiiloader-gtk: build_dir/axeii_backend.o build_dir/axeii_loader.o src/ui_gtk.c src/gtk/axeiiloader_gtk.c src/gtk/axeiiloader_gtk.h
-	cc `pkg-config --cflags gtk+-3.0` src/ui_gtk.c src/gtk/axeiiloader_gtk.c build_dir/axeii_backend.o build_dir/axeii_loader.o \
-	-o build_dir/axeiiloader-gtk \
+build_dir/axeiiloader-gui: build_dir/axeii_backend.o build_dir/axeii_loader.o src/ui.c src/gtk/axeiiloader_gtk.c src/gtk/axeiiloader_gtk.h
+	cc `pkg-config --cflags gtk+-3.0` src/ui.c src/gtk/axeiiloader_gtk.c build_dir/axeii_backend.o build_dir/axeii_loader.o \
+	-o build_dir/axeiiloader-gui \
 	-Wall -Werror -Wpedantic \
 	`pkg-config --libs gtk+-3.0` -lasound
 

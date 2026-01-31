@@ -1,4 +1,4 @@
-/*    ui.c - IUP GUI interface to send/receive data from an Axe-FX II
+/*    ui.c - GTK GUI interface to send/receive data from an Axe-FX II
  *    Copyright (C) 2025-2026  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -18,343 +18,260 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <iup.h>
+#include <gtk/gtk.h>
+#include "gtk/axeiiloader_gtk.h"
 #include "axeii_loader.h"
 
 static enum {
-    SEND_MODE = 1,
+    SEND_MODE = 0,
     RECEIVE_MODE
 } mode = SEND_MODE;
 
 static dev_info_t **devs = NULL;
-static Ihandle *startbutton, *messagelabel, *progressbar;
+static int amount = 0;
+static GObject *mididevs, *type, *tabs,
+               *sendfile, *sendloc, *senddetail, *recdir, *recloc, *rectype,
+               *messagelabel, *progressbar, *startbutton,
+               *sendadjust, *recadjust;
 
 /* Required by axeii_utils */
 void progressCallback(int currentProgress) {
     char valAsString[16];
     sprintf(valAsString, "%d", currentProgress);
     if (currentProgress >= 0) {
-        IupSetAttribute(messagelabel, "TITLE", "Doing transfer...");
-        IupSetAttribute(progressbar, "VALUE", valAsString);
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Doing transfer...");
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), ((gdouble)currentProgress) / 100);
     } else if (currentProgress < 0) {
-        IupSetAttribute(messagelabel, "TITLE", "Trying to capture header...");
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
     }
+
     if (currentProgress == 100) {
-        IupSetAttribute(messagelabel, "TITLE", "Transfer complete!");
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
     }
-    IupFlush();
 }
 
-/* Required by axeii_utils */
 void nameProvider(char *name) {
     char buf[256];
     sprintf(buf, "File saved as %s", name);
-    IupSetAttribute(messagelabel, "TITLE", buf);
+    gtk_label_set_text(GTK_LABEL(messagelabel), buf);
 }
 
-static void getMidiDevices(Ihandle *list) {
-    char buf[32];
-    int amount = -1, index = -1;
-    if (devs != NULL) freeAxeMidiDevs(devs);
-    devs = getAxeMidiDevs(&amount, &index);
+void checkAndEnable() {
+    char passed_checks = 1, properties;
+    gchar *path, *axe_type;
 
-    if (amount >= 0) {
-        for (int i = 0; i < amount; i++) {
-            sprintf(buf, "%d", i + 1);
-            IupSetAttribute(list, buf, devs[i]->hw_name);
-            if (i == 5) break;
-        }
-    }
+    axe_type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
 
-    if (index >= 0) {
-        sprintf(buf, "%d", index + 1);
-        IupSetAttribute(list, "VALUE", buf);
-    }
-}
-
-static char detectAndEnable() {
-    char properties = 0;
-    char filepath[256];
-    if(IupGetAttribute(IupGetHandle("midi_dev"), "VALUE") != NULL) {
-        if (mode == SEND_MODE) {
-            strcpy(filepath, IupGetAttribute(IupGetHandle("send_file"), "VALUE"));
-            properties = detectFileProperties(filepath);
-            if ((properties == FILE_ERROR) || !(properties & IS_VALID)) {
-                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "NO");
-                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "Type could not be detected");
-            } else if (properties & IS_PRESET) {
-                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "NO");
-                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "Preset File Detected");
-            } else {
-                IupSetAttribute(IupGetHandle("send_loc"), "ACTIVE", "YES");
-                IupSetAttribute(IupGetHandle("send_type"), "TITLE", "IR File Detected");
-            }
-        } else if (mode == RECEIVE_MODE) {
-            strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
-            if (filepath[0] == '/') properties = 1;
-        }
-        if ((properties & IS_VALID) && (properties != FILE_ERROR))
-            IupSetAttribute(startbutton, "ACTIVE", "YES");
-        else
-            IupSetAttribute(startbutton, "ACTIVE", "NO");
-    }
-    return 0;
-}
-
-static int changePrIr_cb(Ihandle *ih) {
-    (void)ih;
-    char *str;
-    char *rc_pr_ir_md = strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset");
-    switch (atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1) {
-        case 0:
-            /* OG Units */
-            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "104");
-            str = (rc_pr_ir_md == NULL) ? "100": "383";
-            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
-        break;
-
-        default:
-            /* XL(+) Units */
-            IupSetAttribute(IupGetHandle("send_loc"), "SPINMAX", "1028");
-            str = (rc_pr_ir_md == NULL) ? "1024": "767";
-            IupSetAttribute(IupGetHandle("recv_loc"), "SPINMAX", str);
-    }
-    str = (rc_pr_ir_md == NULL) ? "1": "0";
-    IupSetAttribute(IupGetHandle("recv_loc"), "SPINMIN", str);
-    return IUP_DEFAULT;
-}
-
-static int setMode_cb(Ihandle *ih, int new_pos, int old_pos) {
-    (void)ih; (void)old_pos;
-    mode = new_pos + 1;
-    IupSetAttribute(progressbar, "VALUE", "0");
-    detectAndEnable();
-    changePrIr_cb(NULL);
-    return IUP_DEFAULT;
-}
-
-static int openFile_cb(Ihandle *ih) {
-    (void)ih;
-    char filepath[256];
-    IupSetAttribute(progressbar, "VALUE", "0");
-    if (IupGetFile(filepath) + 1) {
-        IupSetAttribute(IupGetHandle("send_file"), "VALUE", filepath);
-        detectAndEnable();
-    }
-    return IUP_DEFAULT;
-}
-
-static int openDir_cb(Ihandle *ih) {
-    (void)ih;
-    IupSetAttribute(progressbar, "VALUE", "0");
-    Ihandle *dlg = IupFileDlg();
-    IupSetAttribute(dlg, "DIALOGTYPE", "DIR");
-    if (IupPopup(dlg, IUP_CENTER, IUP_CENTER) == IUP_NOERROR) {
-        char *dir = IupGetAttribute(dlg, "VALUE");
-        if (dir) IupSetAttribute(IupGetHandle("recv_dir"), "VALUE", dir);
-    }
-    IupDestroy(dlg);
-    detectAndEnable();
-    return IUP_DEFAULT;
-}
-
-static int start_cb(Ihandle *ih) {
-    int location = 0, midiIndex;
-    char ret, properties = 0, filepath[256];
-    IupSetAttribute(ih, "ACTIVE", "NO");
-    IupSetAttribute(progressbar, "VALUE", "0");
-    midiIndex = atoi(IupGetAttribute(IupGetHandle("midi_dev"), "VALUE")) - 1;
-    ret = initMIDI(devs[midiIndex]->hw_string);
-
-    switch (atoi(IupGetAttribute(IupGetHandle("axe_type"), "VALUE")) - 1) {
-        case 1:
-            properties |= IS_XL_UNIT;
-        break;
-        case 2:
-            properties |= IS_XLP_UNIT;
-        break;
-        default:
-            properties |= IS_OG_UNIT;
-    }
-
-    IupSetAttribute(messagelabel, "TITLE", "Starting Transfer...");
+    /* Check file is valid */
     if (mode == SEND_MODE) {
-        strcpy(filepath, IupGetAttribute(IupGetHandle("send_file"), "VALUE"));
-        properties = detectFileProperties(filepath) | (properties & CLEAR_FILE);
-        location = atoi(IupGetAttribute(IupGetHandle("send_loc"), "VALUE"));
-        ret = sendFile(filepath, properties, location);
-    } else if (mode == RECEIVE_MODE) {
-        strcpy(filepath, IupGetAttribute(IupGetHandle("recv_dir"), "VALUE"));
-        location = atoi(IupGetAttribute(IupGetHandle("recv_loc"), "VALUE"));
+        path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile));
+    } else {
+        /* Is a directory path valid for receive mode */
+        path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(recdir));
+    }
+    if (path == NULL) passed_checks = 0;
 
+    /* If in send mode, is the file at the given path valid? */
+    /* Also constrain IR send locations */
+    if (mode == SEND_MODE && passed_checks) {
+        properties = detectFileProperties(path);
+        if ((properties == FILE_ERROR) || !(properties & IS_VALID)) {
+            gtk_widget_set_sensitive(GTK_WIDGET(sendloc), FALSE);
+            gtk_label_set_text(GTK_LABEL(senddetail), "Type could not be detected");
+            passed_checks = 0;
+        } else if (properties & IS_PRESET) {
+            gtk_widget_set_sensitive(GTK_WIDGET(sendloc), FALSE);
+            gtk_label_set_text(GTK_LABEL(senddetail), "Preset File Detected");
+        } else {
+            gtk_widget_set_sensitive(GTK_WIDGET(sendloc), TRUE);
+            gtk_label_set_text(GTK_LABEL(senddetail), "IR File Detected");
+            gtk_adjustment_set_lower(GTK_ADJUSTMENT(sendadjust), 1.0);
+            if (axe_type[0] == 'O') {
+                gtk_adjustment_set_upper(GTK_ADJUSTMENT(sendadjust), 104.0);
+            } else {
+                gtk_adjustment_set_upper(GTK_ADJUSTMENT(sendadjust), 1028.0);
+            }
+            gtk_adjustment_set_value(GTK_ADJUSTMENT(sendadjust),
+                                     gtk_adjustment_get_value(GTK_ADJUSTMENT(sendadjust)));
+        }
+    }
+
+    /* Constrain receive locations */
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype))) {
+        /* PRESET */
+        gtk_adjustment_set_lower(GTK_ADJUSTMENT(recadjust), 0.0);
+        if (axe_type[0] == 'O') {
+            gtk_adjustment_set_upper(GTK_ADJUSTMENT(recadjust), 383.0);
+        } else {
+            gtk_adjustment_set_upper(GTK_ADJUSTMENT(recadjust), 767.0);
+        }
+    } else {
+        /* IR */
+        gtk_adjustment_set_lower(GTK_ADJUSTMENT(recadjust), 1.0);
+        if (axe_type[0] == 'O') {
+            gtk_adjustment_set_upper(GTK_ADJUSTMENT(recadjust), 100.0);
+        } else {
+            gtk_adjustment_set_upper(GTK_ADJUSTMENT(recadjust), 1024.0);
+        }
+    }
+    gtk_adjustment_set_value(GTK_ADJUSTMENT(recadjust),
+                             gtk_adjustment_get_value(GTK_ADJUSTMENT(recadjust)));
+
+    /* Is MIDI device valid */
+    if (devs == NULL) {
+        passed_checks = 0;
+    }
+
+    if (passed_checks) {
+        gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
+    } else {
+        gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
+    }
+}
+
+/* Callbacks */
+void box_cb(GtkComboBox* self, gpointer user_data) {
+    checkAndEnable();
+}
+
+void tabs_cb(GtkNotebook* self, GtkWidget* page, guint page_num, gpointer user_data) {
+    mode = page_num;
+    checkAndEnable();
+}
+
+void file_cb(GtkFileChooserButton* self, gpointer user_data) {
+    checkAndEnable();
+}
+
+void rectype_cb(GtkToggleButton* self, gpointer user_data) {
+    checkAndEnable();
+}
+
+void start_cb(GtkButton* self, gpointer user_data) {
+    char properties = 0, ret, *str, path[256];
+    int location;
+    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), 0.0);
+
+    str = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
+
+    properties |= IS_OG_UNIT;
+    switch (str[0]) {
+        case 'O':
+            properties |= IS_OG_UNIT;
+        break;
+        case 'X':
+            if (strlen(str) > 5) {
+                properties |= IS_XLP_UNIT;
+            } else {
+                properties |= IS_XL_UNIT;
+            }
+        break;
+    }
+
+    gtk_label_set_text(GTK_LABEL(messagelabel), "Starting Transfer...");
+
+    int midiIndex;
+    str = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(mididevs));
+    for (midiIndex = 0; midiIndex < amount; midiIndex++) {
+        if(!strcmp(str, devs[midiIndex]->hw_name)) {
+            break;
+        }
+    }
+
+    initMIDI(devs[midiIndex]->hw_string);
+    if (mode == SEND_MODE) {
+        strcpy(path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile)));
+        location = gtk_adjustment_get_value(GTK_ADJUSTMENT(sendadjust));
+        properties = detectFileProperties(path) | (properties & CLEAR_FILE);
+        ret = sendFile(path, properties, location);
+    } else {
+        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
+        strcpy(path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(recdir)));
+        strcat(path, "/");  /* The library expects a trailing / on directory names */
+        location = gtk_adjustment_get_value(GTK_ADJUSTMENT(recadjust));
         properties |= IS_VALID;
-        if (strstr(IupGetAttribute(IupGetHandle("type_opt"), "VALUE"), "preset")) {
+        if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype))) {
             properties |= IS_PRESET;
-            strcat(filepath, "/");
         } else {
             properties &= SET_IR;
-            strcat(filepath, "/");
         }
-        ret = getFile(filepath, properties, location);
+        ret = getFile(path, properties, location);
     }
     closeMIDI();
 
     if (ret == FILE_ERROR) {
-        IupSetAttribute(messagelabel, "TITLE", "Couldn't open file!");
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't open file!");
     } else if (ret == DESTINATION_UNIT_INVALID) {
-        IupSetAttribute(messagelabel, "TITLE", "Can't send XL/XL+ file to OG/MKII!");
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Can't send XL/XL+ file to OG/MKII!");
     } else if (ret == HEADER_LOCK_ISSUE) {
-        IupSetAttribute(messagelabel, "TITLE", "Couldn't lock onto header!");
+        gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't lock onto header!");
     } else if (ret == PROPERTIES_INVALID) {
-        IupSetAttribute(messagelabel, "TITLE", "File and/or values are not valid!");
+        gtk_label_set_text(GTK_LABEL(messagelabel), "File and/or values are not valid!");
     }
 
-    IupSetAttribute(ih, "ACTIVE", "YES");
-    return IUP_DEFAULT;
-}
-
-static int show_notes_cb(Ihandle *ih) {
-    (void)ih;
-    Ihandle *note1 = IupLabel("Note 1: Preset location is unrequired for sending, as it's loaded to the edit buffer.");
-    Ihandle *note2 = IupLabel("Note 2: Scratchpad locations start after the User locations, e.g. 1025 is Scratchpad 1 on an XL.");
-    Ihandle *note3 = IupLabel("Note 3: Please select the correct unit, or transfers may fail. Unit type is not autodetected.");
-    Ihandle *note4 = IupLabel("Note 4: Only up to the first five MIDI devices are checked and listed.");
-    Ihandle *note5 = IupLabel("Note 5: This utility does not convert between OG/MKII and XL(+) presets.");
-    Ihandle *note6 = IupLabel("Note 6: XL/XL+ support thanks to @Wepeell!");
-    Ihandle *box   = IupVbox(
-        IupSetAttributes(note1, "EXPAND=HORIZONTAL"),
-        IupSetAttributes(note2, "EXPAND=HORIZONTAL"),
-        IupSetAttributes(note3, "EXPAND=HORIZONTAL"),
-        IupSetAttributes(note4, "EXPAND=HORIZONTAL"),
-        IupSetAttributes(note5, "EXPAND=HORIZONTAL"),
-        IupSetAttributes(note6, "EXPAND=HORIZONTAL"),
-        NULL);
-    Ihandle *dlg = IupDialog(box);
-    IupSetAttributes(dlg, "TITLE=\"Notes\", RESIZE=NO, MINBOX=NO");
-    IupPopup(dlg, IUP_CENTER, IUP_CENTER);
-    IupDestroy(dlg);
-    return IUP_DEFAULT;
+    checkAndEnable();
 }
 
 /* MAIN */
-int main(int argc, char **argv) {
-    Ihandle *dlg, *frame_1, *frame_2, *box_1, *box_2,
-            *label_1, *label_2, *label_3,
-            *entry_1, *entry_2, *entry_3,
-            *select_1, *select_2, *button_1,
-            *sendtab, *receivetab, *tabs,
-            *topmenu_1, *menu_1;
 
-    IupOpen(&argc, &argv);
+int main(int argc, char *argv[]) {
+    int index = 0;
+    GtkBuilder *builder;
+    GObject *window;
+    GResource *ui = axeiiloader_gtk_get_resource();
+    g_resources_register(ui);
 
-    /* DEVICE SETUP */
-    label_1 = IupLabel("MIDI Device:");
-    label_2 = IupLabel("AXE-FX II Type:");
-    entry_1 = IupList(NULL);
-    entry_2 = IupList(NULL);
-
-    IupSetAttributes(entry_1, "DROPDOWN=YES, EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "1=OG/MKII, 2=XL, 3=XL+, VALUE=1, DROPDOWN=YES, EXPAND=HORIZONTAL");
-    IupSetHandle("midi_dev", entry_1);
-    IupSetHandle("axe_type", entry_2);
-    getMidiDevices(entry_1);
-    IupSetCallback(entry_2, "VALUECHANGED_CB", (Icallback)changePrIr_cb);
-
-    box_1 = IupGridBox(label_1, entry_1, label_2, entry_2, NULL);
-    IupSetAttributes(box_1, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
-                            "GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=2");
-    IupSetAttribute(box_1, "RASTERSIZE", "x80");  /* GridBox seems to underestimate it's size a bit */
-    frame_1 = IupFrame(box_1);
-    IupSetAttributes(frame_1, "TITLE=\"Device Setup\"");
-
-    /* SEND TAB */
-    label_1  = IupLabel("File:");
-    label_2  = IupLabel("Location:");
-    label_3  = IupLabel("Detected:");
-    entry_1  = IupText(NULL);
-    button_1 = IupButton("Browse...", NULL);
-    entry_2  = IupText(NULL);
-    entry_3  = IupLabel("Type could not be detected");
-
-    IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=1, SPINMAX=104, ACTIVE=NO");
-    IupSetHandle("send_file", entry_1);
-    IupSetHandle("send_loc", entry_2);
-    IupSetHandle("send_type", entry_3);
-    IupSetCallback(button_1, "ACTION", (Icallback)openFile_cb);
-
-    sendtab = IupGridBox(label_1, entry_1, button_1,
-                         label_2, entry_2, IupSpace(),
-                         label_3, entry_3, IupSpace(), NULL);
-    IupSetAttributes(sendtab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
-                              "GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3, CMARGIN=5x5");
-    IupSetAttribute(sendtab, "TABTITLE", "SEND");
-
-    /* RECEIVE TAB */
-    label_1  = IupLabel("Directory:");
-    label_2  = IupLabel("Location:");
-    label_3  = IupLabel("Type:");
-    entry_1  = IupText(NULL);
-    button_1 = IupButton("Browse...", NULL);
-    entry_2  = IupText(NULL);
-    IupSetAttributes(entry_1, "EXPAND=HORIZONTAL");
-    IupSetAttributes(entry_2, "EXPAND=HORIZONTAL, SPIN=YES, SPINMIN=0, SPINMAX=383");
-    IupSetHandle("recv_dir", entry_1);
-    IupSetHandle("recv_loc", entry_2);
-    IupSetCallback(button_1, "ACTION", (Icallback)openDir_cb);
-
-    select_1 = IupSetAttributes(IupToggle("PRESET", NULL), "EXPAND=HORIZONTAL");
-    select_2 = IupSetAttributes(IupToggle("IR", NULL), "EXPAND=HORIZONTAL");
-    entry_3  = IupRadio(IupHbox(select_1, select_2, NULL));
-    IupSetHandle("preset", select_1);
-    IupSetHandle("ir", select_2);
-    IupSetHandle("type_opt", entry_3);
-
-    receivetab = IupGridBox(label_1, entry_1, button_1,
-                            label_2, entry_2, IupSpace(),
-                            label_3, entry_3, IupSpace(), NULL);
-
-    IupSetAttribute(receivetab, "RASTERSIZE", "x110");  /* GridBox seems to underestimate it's size a bit */
-    IupSetAttributes(receivetab, "ALIGNMENTLIN=ACENTER, ALIGNMENTCOL=ARIGHT,"
-                                 "GAPLIN=20, GAPCOL=5, SIZELIN=-1, NUMDIV=3, CMARGIN=5x5");
-    IupSetAttribute(receivetab, "TABTITLE", "RECEIVE");
-    tabs = IupTabs(sendtab, receivetab, NULL);
-    IupSetCallback(tabs, "TABCHANGEPOS_CB", (Icallback)setMode_cb);
-    IupSetCallback(select_1, "VALUECHANGED_CB", (Icallback)changePrIr_cb);
-
-    /* TRANSFER DETAILS */
-    messagelabel = IupLabel("Messages Will Display Here. Progress Bar Is Below.");
-    progressbar  = IupProgressBar();
-    IupSetAttributes(messagelabel, "EXPAND=HORIZONTAL");
-    IupSetAttributes(progressbar, "MIN=0, MAX=100, VALUE=0, EXPAND=HORIZONTAL");
-    box_1 = IupVbox(messagelabel, progressbar, NULL);
-    IupSetAttributes(box_1, "GAP=1");
-    frame_2 = IupFrame(box_1);
-    IupSetAttributes(frame_2, "TITLE=\"Transfer Details\", EXPAND=HORIZONTAL");
-
-    /* START BUTTON AND LAYOUT */
-    startbutton = IupButton("Start", NULL);
-    IupSetAttributes(startbutton, "SIZE=60x18, ACTIVE=NO");
-    IupSetCallback(startbutton, "ACTION", (Icallback)start_cb);
-    box_2 = IupHbox(IupFill(), startbutton, NULL);
-    IupSetAttributes(box_2, "MARGIN=0x5, EXPAND=HORIZONTAL");
-    box_1 = IupVbox(frame_1, tabs, frame_2, box_2, NULL);
-    IupSetAttributes(box_1, "GAP=10, MARGIN=6x6");
-
-    /* MENU */
-    menu_1 = IupItem("&Notes", NULL);
-    IupSetCallback(menu_1, "ACTION", (Icallback)show_notes_cb);
-    topmenu_1 = IupMenu(menu_1, NULL);
-    menu_1 = IupMenu(IupSubmenu("&Help", topmenu_1), NULL);
-
-    /* DIALOG */
-    dlg = IupDialog(box_1);
-    IupSetAttributes(dlg, "TITLE=\"AXE-FX II LOADER\", MAXSIZE=420x500, RESIZE=NO");
-    IupSetAttributeHandle(dlg, "MENU", menu_1);
-
-    IupShowXY(dlg, IUP_CENTER, IUP_CENTER);
-    IupMainLoop();
-    IupClose();
     if (devs != NULL) freeAxeMidiDevs(devs);
-    return EXIT_SUCCESS;
+    devs = getAxeMidiDevs(&amount, &index);
+
+    gtk_init(&argc, &argv);
+    builder = gtk_builder_new_from_resource("/m0jxd/axeiiloader/builder.ui");
+
+    /* Setup widgets from builder */
+    mididevs     = gtk_builder_get_object(builder, "mididevs");
+    type         = gtk_builder_get_object(builder, "type");
+    tabs         = gtk_builder_get_object(builder, "tabs");
+    sendfile     = gtk_builder_get_object(builder, "sendfile");
+    sendloc      = gtk_builder_get_object(builder, "sendloc");
+    senddetail   = gtk_builder_get_object(builder, "senddetail");
+    recdir       = gtk_builder_get_object(builder, "recdir");
+    recloc       = gtk_builder_get_object(builder, "recloc");
+    rectype      = gtk_builder_get_object(builder, "rectype");
+    messagelabel = gtk_builder_get_object(builder, "messagelabel");
+    progressbar  = gtk_builder_get_object(builder, "progressbar");
+    startbutton  = gtk_builder_get_object(builder, "startbutton");
+    sendadjust   = gtk_builder_get_object(builder, "sendadjust");
+    recadjust    = gtk_builder_get_object(builder, "recadjust");
+    window       = gtk_builder_get_object(builder, "window");
+
+    /* Add midi devices to list */
+    if (amount > 0) {
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(mididevs), devs[index]->hw_name);
+        if (amount > 1) {
+            for (int i = 0; i < amount; i++) {
+                if (amount != index) {
+                    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(mididevs), devs[i]->hw_name);
+                }
+            }
+        }
+    }
+
+    /* Connect callbacks */
+    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(mididevs, "changed", G_CALLBACK(box_cb), NULL);
+    g_signal_connect(type, "changed", G_CALLBACK(box_cb), NULL);
+    g_signal_connect(tabs, "switch-page", G_CALLBACK(tabs_cb), NULL);
+    g_signal_connect(sendfile, "file-set", G_CALLBACK(file_cb), NULL);
+    g_signal_connect(recdir, "file-set", G_CALLBACK(file_cb), NULL);
+    g_signal_connect(rectype, "toggled", G_CALLBACK(rectype_cb), NULL);
+    g_signal_connect(startbutton, "clicked", G_CALLBACK(start_cb), NULL);
+
+    /* NB: Using the procedural style gtk_main() is not supported in GTK4 */
+    /* So I will need to upgrade to g_application_run on the GtkApplication */
+    gtk_main();
+    freeAxeMidiDevs(devs);
+    devs = NULL;
+    g_resources_unregister(ui);
+    return 0;
 }
