@@ -35,10 +35,19 @@ build_dir/axeiiloader: build_dir/axeii_backend.o build_dir/axeii_loader.o src/cl
 	fi ;
 
 build_dir/axeiiloader-gui: build_dir/axeii_backend.o build_dir/axeii_loader.o src/ui.c src/gtk/axeiiloader_gtk.c src/gtk/axeiiloader_gtk.h
-	cc `pkg-config --cflags gtk+-3.0` src/ui.c src/gtk/axeiiloader_gtk.c build_dir/axeii_backend.o build_dir/axeii_loader.o \
-	-o build_dir/axeiiloader-gui \
-	-Wall -Werror -Wpedantic \
-	`pkg-config --libs gtk+-3.0` -lasound
+	NAME=`uname -s` ; \
+	if [ $$NAME = "Linux" ]; then \
+		cc `pkg-config --cflags gtk+-3.0` src/ui.c src/gtk/axeiiloader_gtk.c build_dir/axeii_backend.o build_dir/axeii_loader.o \
+		-o build_dir/axeiiloader-gui \
+		-Wall -Werror -Wpedantic \
+		`pkg-config --libs gtk+-3.0` -lasound ; \
+	fi ; \
+	if [ $$NAME = "FreeBSD" ]; then \
+		cc `pkg-config --cflags gtk+-3.0` src/ui.c src/gtk/axeiiloader_gtk.c build_dir/axeii_backend.o build_dir/axeii_loader.o \
+		-o build_dir/axeiiloader-gui \
+		-Wall -Werror -Wpedantic \
+		`pkg-config --libs gtk+-3.0` ; \
+	fi ;
 
 src/gtk/axeiiloader_gtk.c: src/gtk/builder.ui src/gtk/axeiiloader_gtk.gresource.xml
 	glib-compile-resources --generate-source --target=src/gtk/axeiiloader_gtk.c src/gtk/axeiiloader_gtk.gresource.xml
@@ -57,7 +66,7 @@ build_dir/axeii_backend.o: src/alsa/axeii_alsa.c src/oss/axeii_oss.c
 	NAME=`uname -s` ; \
 	if [ $$NAME = "Linux" ]; then \
 		cc -c src/alsa/axeii_alsa.c -o build_dir/axeii_backend.o \
-		-Wall -Werror -Wextra -Wpedantic -O2 -lasound ; \
+		-Wall -Werror -Wextra -Wpedantic -O2 ; \
 	fi ; \
 	if [ $$NAME = "FreeBSD" ]; then \
 		cc -c src/alsa/axeii_oss.c -o build_dir/axeii_backend.o \
