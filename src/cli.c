@@ -25,7 +25,7 @@
 enum modes { SEND = 1, RECEIVE };
 
 /* FUNCTIONS */
-static void usage() {
+static void usage(void) {
     puts("=== Axe-FX II Loader Help Text ===");
     puts("The default mode is receive mode, and will save obtained files into the current directory.");
     puts("If the -d option is not given it will try to autodetect from up to the first five available devices.");

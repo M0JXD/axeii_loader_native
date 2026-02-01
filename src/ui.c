@@ -60,7 +60,7 @@ void nameProvider(char *name) {
     gtk_label_set_text(GTK_LABEL(messagelabel), buf);
 }
 
-void checkAndEnable() {
+void checkAndEnable(void) {
     char passed_checks = 1, properties;
     gchar *path, *axe_type;
 
