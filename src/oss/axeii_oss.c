@@ -68,9 +68,9 @@ char getMidi(unsigned char *data, unsigned int len) {
 char clearMidiInBuffer(void) {
     int ret;
     struct pollfd fds = {
-        fd = input;  /* file descriptor */
-        events = POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI;   /* requested events */
-        revents = 1; /* returned events */
+        .fd = input,  /* file descriptor */
+        .events = POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI,   /* requested events */
+        .revents = 1, /* returned events */
     };
 
     while (1) {
