@@ -132,7 +132,7 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
         strcat(devString, buf);
 
         if (access(devString, F_OK) == 0) {
-            fd = open(devString, O_RDONLY, 0)
+            fd = open(devString, O_RDONLY, 0);
             oss_midi_info mi;
             mi.dev = -1;
             ioctl(fd, SNDCTL_MIDIINFO, &mi);
