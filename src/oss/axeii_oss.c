@@ -128,7 +128,8 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
             mi.dev = -1;
             ioctl(fd, SNDCTL_MIDIINFO, &mi);
             strcpy(devs[*amount]->hw_string, devString);
-            strcpy(devs[*amount]->hw_name, mi.name);
+            strcpy(devs[*amount]->hw_name, devString);
+            /*strcpy(devs[*amount]->hw_name, mi.name);*/
             close(fd);
             (*amount)++;
         }
