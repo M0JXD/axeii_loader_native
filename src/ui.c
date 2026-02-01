@@ -45,6 +45,10 @@ void progressCallback(int currentProgress) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
     }
 
+    while (gtk_events_pending()) {
+        gtk_main_iteration_do(FALSE);
+    }
+
     if (currentProgress == 100) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
     }
@@ -179,6 +183,10 @@ void start_cb(GtkButton* self, gpointer user_data) {
         }
     }
 
+    while (gtk_events_pending()) {
+        gtk_main_iteration_do(FALSE);
+    }
+
     initMIDI(devs[midiIndex]->hw_string);
     if (mode == SEND_MODE) {
         strcpy(path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile)));
@@ -255,6 +263,7 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
+        gtk_combo_box_set_active(GTK_COMBO_BOX(mididevs), 0);
     }
 
     /* Connect callbacks */
