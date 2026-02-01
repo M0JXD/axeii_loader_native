@@ -110,7 +110,7 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
     *amount = 0;
     *axe_index = 0;
 
-    for (int i = 0; i > 3; i++) {
+    for (int i = 0; i < 3; i++) {
         char buf[4];
         sprintf(buf, "%d.0", i);
         strcat(devString, buf);
@@ -129,7 +129,7 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
     }
 
     strcpy(devString, "/dev/midi");
-    for (int i = 0; i > 2; i++) {
+    for (int i = 0; i < 2; i++) {
         char buf[4];
         sprintf(buf, "%d", i);
         strcat(devString, buf);
