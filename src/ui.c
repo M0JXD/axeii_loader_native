@@ -60,6 +60,23 @@ void nameProvider(char *name) {
     gtk_label_set_text(GTK_LABEL(messagelabel), buf);
 }
 
+void aboutDialog(GtkMenuItem* self, gpointer user_data) {
+    GtkWidget *dialog = gtk_message_dialog_new(NULL,
+                                               GTK_DIALOG_MODAL,
+                                               GTK_MESSAGE_OTHER,
+                                               GTK_BUTTONS_CLOSE,
+    "Note 1: Preset location is unrequired for sending, as it's loaded to the edit buffer.\n"
+    "Note 2: Scratchpad locations start after the User locations, e.g. 1025 is Scratchpad 1 on an XL.\n"
+    "Note 3: Please select the correct unit, or transfers may fail. Unit type is not autodetected.\n"
+    "Note 4: Only up to the first five MIDI devices are checked and listed.\n"
+    "Note 5: This utility does not convert between OG/MKII and XL(+) presets.\n"
+    "Note 6: XL/XL+ support thanks to @Wepeell!");
+
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);
+
+}
+
 void checkAndEnable() {
     char passed_checks = 1, properties;
     gchar *path, *axe_type;
@@ -226,7 +243,7 @@ void start_cb(GtkButton* self, gpointer user_data) {
 int main(int argc, char *argv[]) {
     int index = 0;
     GtkBuilder *builder;
-    GObject *window;
+    GObject *window, *about;
     GResource *ui = axeiiloader_gtk_get_resource();
     g_resources_register(ui);
 
@@ -252,6 +269,7 @@ int main(int argc, char *argv[]) {
     sendadjust   = gtk_builder_get_object(builder, "sendadjust");
     recadjust    = gtk_builder_get_object(builder, "recadjust");
     window       = gtk_builder_get_object(builder, "window");
+    about        = gtk_builder_get_object(builder, "about");
 
     /* Add midi devices to list */
     if (amount > 0) {
@@ -275,6 +293,7 @@ int main(int argc, char *argv[]) {
     g_signal_connect(recdir, "file-set", G_CALLBACK(file_cb), NULL);
     g_signal_connect(rectype, "toggled", G_CALLBACK(rectype_cb), NULL);
     g_signal_connect(startbutton, "clicked", G_CALLBACK(start_cb), NULL);
+    g_signal_connect(about, "activate", G_CALLBACK(aboutDialog), NULL);
 
     /* NB: Using the procedural style gtk_main() is not supported in GTK4 */
     /* So I will need to upgrade to g_application_run on the GtkApplication */
