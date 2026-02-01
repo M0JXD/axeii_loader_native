@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <sys/soundcard.h>
 
 #include "../midi_interface.h"
