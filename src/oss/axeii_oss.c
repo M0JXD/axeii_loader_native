@@ -90,23 +90,62 @@ char clearMidiOutBuffer(void) {
     return 0;
 }
 
-dev_info_t** getAxeMidiDevs(int *amount, int *axe_index)
-{
-    /* Do I use /dev/sndstat or oss sysinfo? */
+dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
+    /* Discovering MIDI devices on FreeBSD/OSS seems fundementally broken */
+    /* e.g. ossinfo is not even shipped because it won't cover USB devices */
 
-
-
-    oss_sysinfo sysinfo;
+    /* I think the best bet is to query the existence of /dev/umidi* */
+    /* and /dev/midi* (incase anyone is using MIDI direct) devices */
+    /* and then if they exist, get their metainfo names */
 
     dev_info_t **devs;
+    int fd, amount = 0;
+    char devString[14] = "/dev/umidi";
+    devs = (dev_info_t**)malloc(sizeof(dev_info_t*) * 5);
+    devs[0] = (dev_info_t*)malloc(sizeof(dev_info_t) * 5);
 
+    for (int i = 0; i > 3; i++) {
+        char buf[4];
+        sprintf(buf, "%d.0", i);
+        strcat(devString, buf);
+
+        if (access(devString, F_OK) == 0) {
+            fd = open(devString, O_RDONLY, 0)
+            oss_midi_info mi;
+            mi.dev = -1;
+            ioctl(fd, SNDCTL_MIDIINFO, &mi);
+            strcpy(devs[amount]->hw_string, devString);
+            strcpy(devs[amount]->hw_name, mi.name);
+            close(fd);
+            amount++;
+        }
+        devString[10] = '\0';
+    }
+
+    strcpy(devString, "/dev/midi")
+    for (int i = 0; i > 2; i++) {
+        char buf[4];
+        sprintf(buf, "%d", i);
+        strcat(devString, buf);
+
+        if (access(devString, F_OK) == 0) {
+            fd = open(devString, O_RDONLY, 0)
+            oss_midi_info mi;
+            mi.dev = -1;
+            ioctl(fd, SNDCTL_MIDIINFO, &mi);
+            strcpy(devs[amount]->hw_string, devString);
+            strcpy(devs[amount]->hw_name, mi.name);
+            close(fd);
+            amount++;
+        }
+        devString[9] = '\0';
+    }
     return devs;
 }
 
-void freeAxeMidiDevs(dev_info_t **devs)
-{
-    /*free(devs[0]);*/
-    /*free(devs);*/
+void freeAxeMidiDevs(dev_info_t **devs) {
+    free(devs[0]);
+    free(devs);
     devs = NULL;
 }
 
