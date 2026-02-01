@@ -63,14 +63,14 @@ char getMidi(unsigned char *data, unsigned int len) {
     int l = 0;
     int ret;
     do {
-        ret = read(input, &data[l], len - l)) ;
+        ret = read(input, &data[l], len - l);
         if (ret == -1) {
             perror("Read MIDI Error!");
             return -1;
         } else {
             len += ret;
         }
-    } while (l != len)
+    } while (l != len);
     return 0;
 }
 
