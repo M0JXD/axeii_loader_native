@@ -92,6 +92,12 @@ char clearMidiOutBuffer(void) {
 
 dev_info_t** getAxeMidiDevs(int *amount, int *axe_index)
 {
+    /* Do I use /dev/sndstat or oss sysinfo? */
+
+
+
+    oss_sysinfo sysinfo;
+
     dev_info_t **devs;
 
     return devs;
@@ -99,8 +105,8 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index)
 
 void freeAxeMidiDevs(dev_info_t **devs)
 {
-    free(devs[0]);
-    free(devs);
+    /*free(devs[0]);*/
+    /*free(devs);*/
     devs = NULL;
 }
 
