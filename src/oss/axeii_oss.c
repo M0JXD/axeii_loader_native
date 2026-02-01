@@ -76,7 +76,7 @@ char clearMidiInBuffer(void) {
 
     while (1) {
         ret = poll(&fds, 1, 2);
-        if (ret = 0) {
+        if (ret == 0) {
             /* Timed out */
             break;
         } else if (ret > 0) {
