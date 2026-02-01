@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -144,6 +145,10 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
         }
         devString[9] = '\0';
     }
+    if (*amount == 0) {
+        perror("Could not find any devices!");
+    }
+
     return devs;
 }
 
