@@ -16,7 +16,7 @@
  */
 
 #include <stdio.h>
-/*#include <fcntl.h>*/
+#include <fcntl.h>
 #include <sys/soundcard.h>
 
 #include "../midi_interface.h"
