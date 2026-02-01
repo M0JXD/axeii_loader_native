@@ -16,6 +16,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/soundcard.h>
@@ -123,7 +124,7 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
         devString[10] = '\0';
     }
 
-    strcpy(devString, "/dev/midi")
+    strcpy(devString, "/dev/midi");
     for (int i = 0; i > 2; i++) {
         char buf[4];
         sprintf(buf, "%d", i);
