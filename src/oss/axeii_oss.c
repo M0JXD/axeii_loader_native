@@ -60,7 +60,7 @@ char sendMidi(unsigned char *data, unsigned int len) {
 }
 
 char getMidi(unsigned char *data, unsigned int len) {
-    int l = 0;
+    unsigned int l = 0;
     int ret;
     do {
         ret = read(input, &data[l], len - l);
