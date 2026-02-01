@@ -108,6 +108,7 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
     devs = (dev_info_t**)malloc(sizeof(dev_info_t*) * 5);
     devs[0] = (dev_info_t*)malloc(sizeof(dev_info_t) * 5);
     *amount = 0;
+    *axe_index = 0;
 
     for (int i = 0; i > 3; i++) {
         char buf[4];
@@ -122,7 +123,7 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
             strcpy(devs[*amount]->hw_string, devString);
             strcpy(devs[*amount]->hw_name, mi.name);
             close(fd);
-            *amount++;
+            (*amount)++;
         }
         devString[10] = '\0';
     }
@@ -141,10 +142,11 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
             strcpy(devs[*amount]->hw_string, devString);
             strcpy(devs[*amount]->hw_name, mi.name);
             close(fd);
-            *amount++;
+            (*amount)++;
         }
         devString[9] = '\0';
     }
+
     if (*amount == 0) {
         perror("Could not find any devices!");
     }
