@@ -60,10 +60,17 @@ char sendMidi(unsigned char *data, unsigned int len) {
 }
 
 char getMidi(unsigned char *data, unsigned int len) {
-    if (read(input, data, len) == -1) {
-        perror("Read MIDI Error!");
-        return -1;
-    }
+    int l = 0;
+    int ret;
+    do {
+        ret = read(input, &data[l], len - l)) ;
+        if (ret == -1) {
+            perror("Read MIDI Error!");
+            return -1;
+        } else {
+            len += ret;
+        }
+    } while (l != len)
     return 0;
 }
 
@@ -140,7 +147,8 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index) {
             mi.dev = -1;
             ioctl(fd, SNDCTL_MIDIINFO, &mi);
             strcpy(devs[*amount]->hw_string, devString);
-            strcpy(devs[*amount]->hw_name, mi.name);
+            strcpy(devs[*amount]->hw_name, devString);
+            /*strcpy(devs[*amount]->hw_name, mi.name);*/
             close(fd);
             (*amount)++;
         }
