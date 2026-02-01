@@ -69,7 +69,7 @@ build_dir/axeii_backend.o: src/alsa/axeii_alsa.c src/oss/axeii_oss.c
 		-Wall -Werror -Wextra -Wpedantic -O2 ; \
 	fi ; \
 	if [ $$NAME = "FreeBSD" ]; then \
-		cc -c src/alsa/axeii_oss.c -o build_dir/axeii_backend.o \
+		cc -c src/oss/axeii_oss.c -o build_dir/axeii_backend.o \
 		-Wall -Werror -Wextra -Wpedantic -O2 ; \
 	fi ;
 
