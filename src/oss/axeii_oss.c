@@ -55,7 +55,6 @@ char sendMidi(unsigned char *data, unsigned int len) {
         perror("Send MIDI Error!");
         return -1;
     }
-
     return 0;
 }
 
@@ -86,11 +85,6 @@ char clearMidiInBuffer(void) {
             read(input, &throwaway, 1);
         }
     }
-    return 0;
-}
-
-char clearMidiOutBuffer(void) {
-    /* OSS buffers everything and it will sync eventually, nothing to do */
     return 0;
 }
 

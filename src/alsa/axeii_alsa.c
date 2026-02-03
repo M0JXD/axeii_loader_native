@@ -58,11 +58,6 @@ char clearMidiInBuffer(void) {
     return 0;
 }
 
-char clearMidiOutBuffer(void) {
-    snd_rawmidi_drop(handleOut);
-    return 0;
-}
-
 /* This rest of this file is modified and reduced from the amidi.c source code
  * to implement device checking. Note it only checks the first five devices.
  * Original license is below.

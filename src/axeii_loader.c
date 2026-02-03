@@ -464,7 +464,6 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
     /* Axe-FX II sends midi tempo ticks. */
     /* Incase the buffer has them, force it to clear */
     clearMidiInBuffer();
-    clearMidiOutBuffer();
 
     /* Request a IR dump */
     sendMidi(command, (properties & IS_OG_UNIT) ? 9 : 10);
