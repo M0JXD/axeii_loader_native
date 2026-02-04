@@ -58,17 +58,17 @@ static char getDevice(char* devString) {
 }
 
 /* axeii_loader needs us to implement this */
-void progressCallback(int currentProgress) {
-    static int oldProgress = 0;
+void progressCallback(double currentProgress) {
+    static double oldProgress = 0.0;
     if (currentProgress <= -1) {
         puts("Trying to lock onto header...");
-    } else if (currentProgress == 0) {
+    } else if (currentProgress == 0.0) {
         printf("Progress: 0%% ...");
         fflush(stdout);
-    } else if (currentProgress == 100) {
+    } else if (currentProgress == 1.0) {
         printf(" 100%%\n");
     } else {
-        if (currentProgress > (oldProgress + 2)) {
+        if (currentProgress > (oldProgress + 0.02)) {
             printf(".");
             fflush(stdout);
             oldProgress = currentProgress;

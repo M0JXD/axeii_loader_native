@@ -15,7 +15,6 @@
  *    with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <gtk/gtk.h>
@@ -35,12 +34,10 @@ static GObject *mididevs, *type, *tabs,
                *sendadjust, *recadjust;
 
 /* Required by axeii_utils */
-void progressCallback(int currentProgress) {
-    char valAsString[16];
-    sprintf(valAsString, "%d", currentProgress);
+void progressCallback(double currentProgress) {
     if (currentProgress >= 0) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Doing transfer...");
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), ((gdouble)currentProgress) / 100);
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), (gdouble)currentProgress);
     } else if (currentProgress < 0) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
     }
@@ -49,7 +46,7 @@ void progressCallback(int currentProgress) {
         gtk_main_iteration_do(FALSE);
     }
 
-    if (currentProgress == 100) {
+    if (currentProgress == 1.0) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
     }
 }
@@ -63,6 +60,9 @@ void nameProvider(char *name) {
 void checkAndEnable(void) {
     char passed_checks = 1, properties;
     gchar *path, *axe_type;
+
+    gtk_label_set_text(GTK_LABEL(messagelabel), "Messages Will Appear Here. Progress Bar is Below.");
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), 0.0);
 
     axe_type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
 

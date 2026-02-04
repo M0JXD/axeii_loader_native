@@ -61,8 +61,6 @@ enum errors {
     LOCATION_OOB = -5
 };
 
-
-
 /* FUNCTION DECLARATIONS */
 
 /** Detects the properties of the file at the given path
@@ -72,9 +70,9 @@ enum errors {
 char detectFileProperties(char *pathToPreset);
 
 /** User implemented function to allow the library to provide transaction progress.
- * @param int currentProgress the current progress of the library, from 0 to 100. Negative numbers are passed for header locking.
+ * @param double currentProgress the current progress of the library, from 0.0 to 1.0. Negative numbers are passed for header locking.
  */
-void progressCallback(int currentProgress);
+void progressCallback(double currentProgress);
 
 /** User implemented function to allow library to provide the name it saved with at save time.
  * @param char* name Name of the file that was just saved

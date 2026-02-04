@@ -49,7 +49,13 @@ char sendMidi(unsigned char *data, unsigned int len) {
 }
 
 char getMidi(unsigned char *data, unsigned int len) {
-    snd_rawmidi_read(handleIn, data, len);
+    int read = 0;
+	do {
+		read += snd_rawmidi_read(handleIn, &data[read], len - read);
+		if (read < 0) {
+			return -1;
+		}
+	} while (read != (int)len);
     return 0;
 }
 
