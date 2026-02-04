@@ -42,13 +42,11 @@ void progressCallback(double currentProgress) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
     }
 
-    while (gtk_events_pending()) {
-        gtk_main_iteration_do(FALSE);
-    }
-
     if (currentProgress == 1.0) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
     }
+
+    gtk_main_iteration_do(FALSE);
 }
 
 void nameProvider(char *name) {
