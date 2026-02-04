@@ -231,8 +231,7 @@ void start_cb(GtkButton* self, gpointer user_data) {
     } else if (ret == PROPERTIES_INVALID) {
         gtk_label_set_text(GTK_LABEL(messagelabel), "File and/or values are not valid!");
     }
-
-    checkAndEnable();
+    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
 }
 
 /* MAIN */
