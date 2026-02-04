@@ -59,14 +59,14 @@ char sendMidi(unsigned char *data, unsigned int len) {
 }
 
 char getMidi(unsigned char *data, unsigned int len) {
-    int read = 0;
-	do {
-		read += read(input, &data[read], len - read);
-		if (read < 0) {
+    int amount = 0;
+    do {
+        amount += read(input, &data[amount], len - amount);
+        if (amount < 0) {
             perror("Read MIDI Error!");
-			return -1;
-		}
-	} while (read != (int)len);
+            return -1;
+        }
+    } while (amount != (int)len);
     return 0;
 }
 
