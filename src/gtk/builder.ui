@@ -313,6 +313,7 @@
                             <property name="can-focus">False</property>
                             <property name="filter">filefilter1</property>
                             <property name="title" translatable="yes">Choose a file to send.</property>
+                            <property name="width-chars">16</property>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
@@ -373,7 +374,7 @@
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="hexpand">True</property>
-                            <property name="max-width-chars">3</property>
+                            <property name="max-width-chars">5</property>
                             <property name="input-purpose">digits</property>
                             <property name="adjustment">recadjust</property>
                             <property name="numeric">True</property>
@@ -390,6 +391,7 @@
                             <property name="can-focus">False</property>
                             <property name="action">select-folder</property>
                             <property name="title" translatable="yes"/>
+                            <property name="width-chars">16</property>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
