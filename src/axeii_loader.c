@@ -162,11 +162,6 @@ static char fetchUntilHeaderCorrect(unsigned char *buffer, int length) {
         if ((buffer[0] == 0xF0) && (buffer[3] == 0x74) &&
             (buffer[5] == 0x77 || buffer[5] == 0x7A)) {
             getMidi(&buffer[6], length - 6);  /* Get the remaining sysex packet */
-            /* Was handy for debugging */
-            /*printf("Read header bytes are: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n",*/
-            /*    buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5],*/
-            /*    buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11]*/
-            /*);*/
             ret = 0;
             break;
         } else if (buffer[5] == 0x64) {
