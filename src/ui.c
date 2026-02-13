@@ -58,8 +58,7 @@ int idleUpdater(gpointer user_data) {
             gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
         }
 
-        if (data.progbarval == 1.0) {
-            pthread_mutex_unlock(&progress_mutex);
+        if ((data.progbarval == 1.0) || (data.ret != 0)) {
             pthread_join(midi_thread, NULL);
             if (data.ret == FILE_ERROR) {
                 gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't open file!");
@@ -69,12 +68,14 @@ int idleUpdater(gpointer user_data) {
                 gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't lock onto header!");
             } else if (data.ret == PROPERTIES_INVALID) {
                 gtk_label_set_text(GTK_LABEL(messagelabel), "File and/or values are not valid!");
-            } else {
+            } else if (!data.mode) {
                 gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
             }
+            data.progbarval = 0.0; data.ret = 0;
             gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
             ret = G_SOURCE_REMOVE;
         }
+        pthread_mutex_unlock(&progress_mutex);
     }
     return ret;
 }
@@ -82,9 +83,9 @@ int idleUpdater(gpointer user_data) {
 void* threadLauncher(void *arg) {
     initMIDI(devs[data.midiIndex]->hw_string);
     if (data.mode) {
-        data.ret = sendFile(data.path, data.properties, data.location);
-    } else {
         data.ret = getFile(data.path, data.properties, data.location);
+    } else {
+        data.ret = sendFile(data.path, data.properties, data.location);
     }
     closeMIDI();
     pthread_exit(NULL);
@@ -276,6 +277,10 @@ int main(int argc, char *argv[]) {
 
     if (devs != NULL) freeAxeMidiDevs(devs);
     devs = getAxeMidiDevs(&amount, &index);
+
+    data.mode = SEND_MODE;
+    data.progbarval = 0.0;
+    data.ret = 0;
 
     gtk_init(&argc, &argv);
     builder = gtk_builder_new_from_resource("/m0jxd/axeiiloader/builder.ui");
