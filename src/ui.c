@@ -169,8 +169,8 @@ void checkAndEnable(void) {
     gtk_adjustment_set_value(GTK_ADJUSTMENT(recadjust),
                              gtk_adjustment_get_value(GTK_ADJUSTMENT(recadjust)));
 
-    /* Is MIDI device valid */
-    if (devs == NULL) {
+    /* Is a MIDI device valid */
+    if (devs == NULL || amount < 1) {
         passed_checks = 0;
     }
 
