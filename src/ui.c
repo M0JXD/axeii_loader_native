@@ -17,14 +17,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
 #include <gtk/gtk.h>
 #include "gtk/axeiiloader_gtk.h"
 #include "axeii_loader.h"
 
-static enum {
+enum MODE {
     SEND_MODE = 0,
     RECEIVE_MODE
-} mode = SEND_MODE;
+};
 
 static dev_info_t **devs = NULL;
 static int amount = 0;
@@ -33,22 +34,70 @@ static GObject *mididevs, *type, *tabs,
                *messagelabel, *progressbar, *startbutton,
                *sendadjust, *recadjust;
 
-/* Required by axeii_utils */
-void progressCallback(double currentProgress) {
-    if (currentProgress >= 0) {
-        gtk_label_set_text(GTK_LABEL(messagelabel), "Doing transfer...");
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), (gdouble)currentProgress);
-    } else if (currentProgress < 0) {
-        gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
-    }
 
-    if (currentProgress == 1.0) {
-        gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
-    }
+/* Thread and Progress bar */
+pthread_t midi_thread;
+pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
+struct _thread_data {
+    char mode;
+    int midiIndex;
+    char path[256];
+    unsigned char properties;
+    int location;
+    char ret;
+    double progbarval;  /* Mutex protects this value, nothing else can be simultaneously accessed */
+} data;
 
-    gtk_main_iteration_do(FALSE);
+int idleUpdater(gpointer user_data) {
+    int ret = G_SOURCE_CONTINUE;
+    if (pthread_mutex_trylock(&progress_mutex) != EBUSY) {
+        if (data.progbarval >= 0) {
+            gtk_label_set_text(GTK_LABEL(messagelabel), "Doing transfer...");
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), (gdouble)data.progbarval);
+        } else if (data.progbarval < 0) {
+            gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
+        }
+
+        if (data.progbarval == 1.0) {
+            pthread_mutex_unlock(&progress_mutex);
+            pthread_join(midi_thread, NULL);
+            if (data.ret == FILE_ERROR) {
+                gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't open file!");
+            } else if (data.ret == DESTINATION_UNIT_INVALID) {
+                gtk_label_set_text(GTK_LABEL(messagelabel), "Can't send XL/XL+ file to OG/MKII!");
+            } else if (data.ret == HEADER_LOCK_ISSUE) {
+                gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't lock onto header!");
+            } else if (data.ret == PROPERTIES_INVALID) {
+                gtk_label_set_text(GTK_LABEL(messagelabel), "File and/or values are not valid!");
+            } else {
+                gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
+            }
+            gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
+            ret = G_SOURCE_REMOVE;
+        }
+    }
+    return ret;
 }
 
+void* threadLauncher(void *arg) {
+    initMIDI(devs[data.midiIndex]->hw_string);
+    if (data.mode) {
+        data.ret = sendFile(data.path, data.properties, data.location);
+    } else {
+        data.ret = getFile(data.path, data.properties, data.location);
+    }
+    closeMIDI();
+    pthread_exit(NULL);
+}
+
+/* Required by axeii_utils */
+void progressCallback(double currentProgress) {
+    pthread_mutex_lock(&progress_mutex);
+    data.progbarval = currentProgress;
+    pthread_mutex_unlock(&progress_mutex);
+}
+
+/* Required by axeii_utils */
 void nameProvider(char *name) {
     char buf[256];
     sprintf(buf, "File saved as %s", name);
@@ -65,7 +114,7 @@ void checkAndEnable(void) {
     axe_type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
 
     /* Check file is valid */
-    if (mode == SEND_MODE) {
+    if (data.mode == SEND_MODE) {
         path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile));
     } else {
         /* Is a directory path valid for receive mode */
@@ -75,7 +124,7 @@ void checkAndEnable(void) {
 
     /* If in send mode, is the file at the given path valid? */
     /* Also constrain IR send locations */
-    if (mode == SEND_MODE && passed_checks) {
+    if (data.mode == SEND_MODE && passed_checks) {
         properties = detectFileProperties(path);
         if ((properties == FILE_ERROR) || !(properties & IS_VALID)) {
             gtk_widget_set_sensitive(GTK_WIDGET(sendloc), FALSE);
@@ -151,7 +200,7 @@ void box_cb(GtkComboBox* self, gpointer user_data) {
 }
 
 void tabs_cb(GtkNotebook* self, GtkWidget* page, guint page_num, gpointer user_data) {
-    mode = page_num;
+    data.mode = page_num;
     checkAndEnable();
 }
 
@@ -164,33 +213,31 @@ void rectype_cb(GtkToggleButton* self, gpointer user_data) {
 }
 
 void start_cb(GtkButton* self, gpointer user_data) {
-    char properties = 0, ret, *str, path[256];
-    int location;
+    char *str;
     gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), 0.0);
 
     str = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(type));
 
-    properties |= IS_OG_UNIT;
+    data.properties |= IS_OG_UNIT;
     switch (str[0]) {
         case 'O':
-            properties |= IS_OG_UNIT;
+            data.properties |= IS_OG_UNIT;
         break;
         case 'X':
             if (strlen(str) > 5) {
-                properties |= IS_XLP_UNIT;
+                data.properties |= IS_XLP_UNIT;
             } else {
-                properties |= IS_XL_UNIT;
+                data.properties |= IS_XL_UNIT;
             }
         break;
     }
 
     gtk_label_set_text(GTK_LABEL(messagelabel), "Starting Transfer...");
 
-    int midiIndex;
     str = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(mididevs));
-    for (midiIndex = 0; midiIndex < amount; midiIndex++) {
-        if(!strcmp(str, devs[midiIndex]->hw_name)) {
+    for (data.midiIndex = 0; data.midiIndex < amount; data.midiIndex++) {
+        if(!strcmp(str, devs[data.midiIndex]->hw_name)) {
             break;
         }
     }
@@ -198,38 +245,24 @@ void start_cb(GtkButton* self, gpointer user_data) {
     while (gtk_events_pending()) {
         gtk_main_iteration_do(FALSE);
     }
-
-    initMIDI(devs[midiIndex]->hw_string);
-    if (mode == SEND_MODE) {
-        strcpy(path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile)));
-        location = gtk_adjustment_get_value(GTK_ADJUSTMENT(sendadjust));
-        properties = detectFileProperties(path) | (properties & CLEAR_FILE);
-        ret = sendFile(path, properties, location);
+    if (data.mode == SEND_MODE) {
+        strcpy(data.path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(sendfile)));
+        data.location = gtk_adjustment_get_value(GTK_ADJUSTMENT(sendadjust));
+        data.properties = detectFileProperties(data.path) | (data.properties & CLEAR_FILE);
     } else {
         gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype));
-        strcpy(path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(recdir)));
-        strcat(path, "/");  /* The library expects a trailing / on directory names */
-        location = gtk_adjustment_get_value(GTK_ADJUSTMENT(recadjust));
-        properties |= IS_VALID;
+        strcpy(data.path, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(recdir)));
+        strcat(data.path, "/");  /* The library expects a trailing / on directory names */
+        data.location = gtk_adjustment_get_value(GTK_ADJUSTMENT(recadjust));
+        data.properties |= IS_VALID;
         if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rectype))) {
-            properties |= IS_PRESET;
+            data.properties |= IS_PRESET;
         } else {
-            properties &= SET_IR;
+            data.properties &= SET_IR;
         }
-        ret = getFile(path, properties, location);
     }
-    closeMIDI();
-
-    if (ret == FILE_ERROR) {
-        gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't open file!");
-    } else if (ret == DESTINATION_UNIT_INVALID) {
-        gtk_label_set_text(GTK_LABEL(messagelabel), "Can't send XL/XL+ file to OG/MKII!");
-    } else if (ret == HEADER_LOCK_ISSUE) {
-        gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't lock onto header!");
-    } else if (ret == PROPERTIES_INVALID) {
-        gtk_label_set_text(GTK_LABEL(messagelabel), "File and/or values are not valid!");
-    }
-    gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
+    pthread_create(&midi_thread, NULL, threadLauncher, NULL);
+    g_idle_add(idleUpdater, NULL);
 }
 
 /* MAIN */
