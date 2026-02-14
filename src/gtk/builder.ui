@@ -18,6 +18,8 @@
     <property name="page-increment">10</property>
   </object>
   <object class="GtkApplicationWindow" id="window">
+    <property name="width-request">400</property>
+    <property name="height-request">460</property>
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="title" translatable="yes">Axe-FX II Loader</property>
@@ -192,6 +194,8 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="label" translatable="yes">Messages Will Appear Here. Progress Bar is Below.</property>
+                            <property name="width-chars">35</property>
+                            <property name="max-width-chars">40</property>
                           </object>
                           <packing>
                             <property name="left-attach">0</property>
@@ -313,7 +317,7 @@
                             <property name="can-focus">False</property>
                             <property name="filter">filefilter1</property>
                             <property name="title" translatable="yes">Choose a file to send.</property>
-                            <property name="width-chars">16</property>
+                            <property name="width-chars">30</property>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
@@ -391,7 +395,7 @@
                             <property name="can-focus">False</property>
                             <property name="action">select-folder</property>
                             <property name="title" translatable="yes"/>
-                            <property name="width-chars">16</property>
+                            <property name="width-chars">30</property>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
