@@ -1,4 +1,4 @@
-/*    midi_devs.c - Get a list of MIDI devices and autodetect the Axe-FX II
+/*    axeii_alsa.c - ALSA backend for AxeII-Loader
  *    Copyright (C) 2025  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,57 @@
  *    with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-/* This file is modified and reduced from the amidi.c source code.
- * Note it only checks the first five devices.
+/*#include <stdio.h>*/
+
+#include <alsa/asoundlib.h>
+#include "../midi_interface.h"
+
+/* GLOBALS */
+static snd_rawmidi_t *handleIn, *handleOut;
+
+/* FUNCTIONS */
+
+char initMIDI(char *devString) {
+    /* TODO: This call leaks? */
+    char err = snd_rawmidi_open(&handleIn, &handleOut, devString, 0);
+    if (err != 0) {
+        return 1;
+    }
+    /* Blocking mode */
+    snd_rawmidi_nonblock(handleIn, 0);
+    /*snd_rawmidi_nonblock(handleOut, 0);*/
+    return 0;
+}
+
+char closeMIDI(void) {
+    snd_rawmidi_close(handleIn);
+    snd_rawmidi_close(handleOut);
+    return 0;
+}
+
+char sendMidi(unsigned char *data, unsigned int len) {
+    snd_rawmidi_write(handleOut, data, len);
+    return 0;
+}
+
+char getMidi(unsigned char *data, unsigned int len) {
+    int read = 0;
+	do {
+		read += snd_rawmidi_read(handleIn, &data[read], len - read);
+		if (read < 0) {
+			return -1;
+		}
+	} while (read != (int)len);
+    return 0;
+}
+
+char clearMidiInBuffer(void) {
+    snd_rawmidi_drop(handleIn);
+    return 0;
+}
+
+/* This rest of this file is modified and reduced from the amidi.c source code
+ * to implement device checking. Note it only checks the first five devices.
  * Original license is below.
  */
 
@@ -40,13 +89,6 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <alsa/asoundlib.h>
-#include "midi_devs.h"
-
-/*static int list_all;*/
 
 static void error(const char *format, ...)
 {
@@ -186,7 +228,7 @@ static int device_list(dev_info_t** devs)
     return amount;
 }
 
-dev_info_t** get_axe_midi_devs(int *amount, int *axe_index)
+dev_info_t** getAxeMidiDevs(int *amount, int *axe_index)
 {
     dev_info_t **devs;
     *axe_index = -1;
@@ -205,7 +247,7 @@ dev_info_t** get_axe_midi_devs(int *amount, int *axe_index)
     return devs;
 }
 
-void free_axe_midi_devs(dev_info_t **devs)
+void freeAxeMidiDevs(dev_info_t **devs)
 {
     free(devs[0]);
     free(devs);

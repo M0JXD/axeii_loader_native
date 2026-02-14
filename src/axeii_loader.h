@@ -1,5 +1,5 @@
-/*    axeii_utils.h - Defines and declarations to send/receive data from an Axe-FX II
- *    Copyright (C) 2025  Jamie Drinkell
+/*    axeii_loader.h - API header for frontends to send/receive data from an Axe-FX II
+ *    Copyright (C) 2025-2026  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 
 #ifndef AXEII_UTILS_H
 #define AXEII_UTILS_H
+
+#include "midi_interface.h"
 
 /* DEFINES */
 /* Transfer Properties */
@@ -61,22 +63,21 @@ enum errors {
 
 /* FUNCTION DECLARATIONS */
 
-/** Sets up the libraries internal RawMIDI handles to the device
- * @param char* devString The ALSA device string as obtained from "amidi -l"
- * @return char 0 on success, -1 on failure
- */
-char setupRawMIDIHandles(char *devString);
-
-/** Closes the libraries previously opened RAWMIDI handles
- * @return char 0 on success
- */
-char closeRawMIDIHandles(void);
-
 /** Detects the properties of the file at the given path
  * @param char* pathToPreset  Path to the preset file (library will open and close it)
  * @return char File properties, see the defines
  */
 char detectFileProperties(char *pathToPreset);
+
+/** User implemented function to allow the library to provide transaction progress.
+ * @param double currentProgress the current progress of the library, from 0.0 to 1.0. Negative numbers are passed for header locking.
+ */
+void progressCallback(double currentProgress);
+
+/** User implemented function to allow library to provide the name it saved with at save time.
+ * @param char* name Name of the file that was just saved
+ */
+void nameProvider(char *name);
 
 /** Send a file of the given properties to a location
  * @param char* pathToFile Path to the file to send
@@ -94,14 +95,5 @@ char sendFile(char *pathToFile, unsigned char properties, int location);
  */
 char getFile(char *pathToSave, unsigned char properties, int location);
 
-/** User implemented function to allow the library to provide transaction progress.
- * @param int currentProgress the current progress of the library, from 0 to 100. Negative numbers are passed for header locking.
- */
-void progressCallback(int currentProgress);
-
-/** User implemented function to allow library to provide the name it saved with at save time.
- * @param char* name Name of the file that was just saved
- */
-void nameProvider(char *name);
 
 #endif /* AXEII_UTILS_H */

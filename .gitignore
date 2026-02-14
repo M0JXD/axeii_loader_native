@@ -2,3 +2,6 @@ lib/iup/*
 build_dir/*
 test_files/*
 *.syx
+src/gtk/axeiiloader_gtk.h
+src/gtk/axeiiloader_gtk.c
+src/gtk/builder.ui~
