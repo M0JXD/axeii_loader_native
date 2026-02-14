@@ -58,11 +58,6 @@ char getMidi(unsigned char *data, unsigned int len);
  */
 char clearMidiInBuffer(void);
 
-/** Clear the output buffer (i.e. force everything to sync)
- * @return char 0 on success, or error code
- */
-char clearMidiOutBuffer(void);
-
 /** Utility to get a list of MIDI devices, which attempts to detect which one is an Axe-FX II
  * @param amount returns the amount of devices
  * @param axe_index the index of an Axe-FX II MIDI device
