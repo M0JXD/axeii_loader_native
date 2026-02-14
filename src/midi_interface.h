@@ -28,7 +28,7 @@ typedef struct DEV_INFO_S {
 
 /* FUNCTIONS */
 
-/** Do any MIDI initialisation
+/** Do any MIDI initialisation, only needed for send/get MIDI
  * @param char* string of desired MIDI device
  * @return char 0 on success, or error code
  */
@@ -58,7 +58,7 @@ char getMidi(unsigned char *data, unsigned int len);
  */
 char clearMidiInBuffer(void);
 
-/** Utility to get a list of MIDI devices, which attempts to detect which one is an Axe-FX II
+/** Get a list of MIDI devices, attempting to autodetect Axe-FX II. MIDI does not need initialised.
  * @param amount returns the amount of devices
  * @param axe_index the index of an Axe-FX II MIDI device
  * @return array of midi device info of length "amount"
