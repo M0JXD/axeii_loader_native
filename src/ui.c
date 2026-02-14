@@ -42,6 +42,7 @@ struct _thread_data {
     char mode;
     int midiIndex;
     char path[256];
+    char saved_name[256];
     unsigned char properties;
     int location;
     char ret;
@@ -68,7 +69,9 @@ int idleUpdater(gpointer user_data) {
                 gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't lock onto header!");
             } else if (data.ret == PROPERTIES_INVALID) {
                 gtk_label_set_text(GTK_LABEL(messagelabel), "File and/or values are not valid!");
-            } else if (!data.mode) {
+            } else if (data.mode) {
+                gtk_label_set_text(GTK_LABEL(messagelabel), data.saved_name);
+            } else {
                 gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
             }
             data.progress = 0.0; data.ret = 0;
@@ -100,9 +103,9 @@ void progressCallback(double currentProgress) {
 
 /* Required by axeii_utils */
 void nameProvider(char *name) {
-    char buf[256];
-    sprintf(buf, "File saved as %s", name);
-    gtk_label_set_text(GTK_LABEL(messagelabel), buf);
+    pthread_mutex_lock(&progress_mutex);
+    sprintf(data.saved_name, "File saved as %s", name);
+    pthread_mutex_unlock(&progress_mutex);
 }
 
 void checkAndEnable(void) {
