@@ -32,7 +32,7 @@ static void usage(void) {
     puts("The unit type (-t option) does not autodetect, and transfers may fail if it's incorrect.");
     puts("");
     puts("=== Options ===");
-    puts("-d <device>      -The device string as appropriate for the backend. e.g. \"hw:2,0\" on ALSA and \"/dev/umidi0.0\" on OSS.");
+    puts("-d <device>      The device string as appropriate for the backend, e.g. \"hw:2,0\" on ALSA and \"/dev/umidi0.0\" on OSS.");
     puts("-i <file name>   Set send mode with given input file (whether it's a preset or IR will be autodetected).");
     puts("-o <file name>   Override the provided file name for receive mode.");
     puts("-m               Set to get IRs in receive mode (ignored for send mode).");
