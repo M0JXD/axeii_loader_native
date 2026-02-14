@@ -5,6 +5,8 @@ You do not need the CLI app to use the GUI app, they are completely separate but
 
 I previously made a [GUI version of this utility in Flutter](https://github.com/M0JXD/axeii_loader), but at the moment the FlutterMidiCommand package it uses for the back-end has bugs on Linux. However I want to keep that version "as is" with the package (instead of replacing it with a FFI back-end), as there is the option of easily porting to other platforms in the future should the MIDI package be picked up and maintained again.
 
+This repo was renamed from axeii_loader_native to axeiiloader on 14/02/26 to better reflect the binary names and the fact it no longer uses the "native wrapping" library, IUP.
+
 ## CLI usage
 
 Without arguments, the CLI attempts to receive from the first preset location.
@@ -20,7 +22,7 @@ If the -d option is not given it will try to autodetect from up to the first fiv
 The unit type (-t option) does not autodetect, and transfers may fail if it's incorrect.
 
 === Options ===
--d <device>      The device string as appropriate for the backend. e.g. "hw:2,0" on ALSA and "/dev/umidi0.0" on OSS.
+-d <device>      The device string as appropriate for the backend, e.g. "hw:2,0" on ALSA and "/dev/umidi0.0" on OSS.
 -i <file name>   Set send mode with given input file (whether it's a preset or IR will be autodetected).
 -o <file name>   Override the provided file name for receive mode.
 -m               Set to get IRs in receive mode (ignored for send mode).
