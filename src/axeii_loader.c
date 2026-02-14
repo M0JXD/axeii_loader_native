@@ -381,7 +381,6 @@ static char getPreset(char *pathToSave, unsigned char properties, int location) 
             progressCallback(((double)i + 1) / ((double)messages + 2));
         }
         getMidi(&buffer[lengthOfFile - PT_END], PT_END);
-        progressCallback(1.0);
 
         /* Save the preset */
         if (pathToSave[strlen(pathToSave) - 1] == '/') {
@@ -393,6 +392,7 @@ static char getPreset(char *pathToSave, unsigned char properties, int location) 
         fwrite(buffer, sizeof(unsigned char), (properties & IS_OG_UNIT) ? OG_PT_SIZE : XL_PT_SIZE, file);
         fclose(file);
         nameProvider(basename(pathToSave));
+        progressCallback(1.0);
     }
     clearMidiInBuffer();
     return ret;
@@ -453,7 +453,6 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
         }
         getMidi(&buffer[lengthOfFile - IR_END], IR_END);
 
-        progressCallback(1.0);
 
         /* Save the IR */
         if (pathToSave[strlen(pathToSave) - 1] == '/') {
@@ -467,6 +466,7 @@ static char getIR(char *pathToSave, unsigned char properties, int location) {
         fwrite(buffer, sizeof(unsigned char), lengthOfFile, file);
         fclose(file);
         nameProvider(basename(pathToSave));
+        progressCallback(1.0);
     }
     clearMidiInBuffer();
     return ret;
