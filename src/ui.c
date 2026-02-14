@@ -45,20 +45,20 @@ struct _thread_data {
     unsigned char properties;
     int location;
     char ret;
-    double progbarval;  /* Mutex protects this value, nothing else can be simultaneously accessed */
+    double progress;  /* Mutex protects this value, nothing else can be simultaneously accessed */
 } data;
 
 int idleUpdater(gpointer user_data) {
     int ret = G_SOURCE_CONTINUE;
     if (pthread_mutex_trylock(&progress_mutex) != EBUSY) {
-        if (data.progbarval >= 0) {
+        if (data.progress >= 0) {
             gtk_label_set_text(GTK_LABEL(messagelabel), "Doing transfer...");
-            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), (gdouble)data.progbarval);
-        } else if (data.progbarval < 0) {
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), (gdouble)data.progress);
+        } else if (data.progress < 0) {
             gtk_label_set_text(GTK_LABEL(messagelabel), "Trying to capture header...");
         }
 
-        if ((data.progbarval == 1.0) || (data.ret != 0)) {
+        if ((data.progress == 1.0) || (data.ret != 0)) {
             pthread_join(midi_thread, NULL);
             if (data.ret == FILE_ERROR) {
                 gtk_label_set_text(GTK_LABEL(messagelabel), "Couldn't open file!");
@@ -71,7 +71,7 @@ int idleUpdater(gpointer user_data) {
             } else if (!data.mode) {
                 gtk_label_set_text(GTK_LABEL(messagelabel), "Transfer complete!");
             }
-            data.progbarval = 0.0; data.ret = 0;
+            data.progress = 0.0; data.ret = 0;
             gtk_widget_set_sensitive(GTK_WIDGET(startbutton), TRUE);
             ret = G_SOURCE_REMOVE;
         }
@@ -94,7 +94,7 @@ void* threadLauncher(void *arg) {
 /* Required by axeii_utils */
 void progressCallback(double currentProgress) {
     pthread_mutex_lock(&progress_mutex);
-    data.progbarval = currentProgress;
+    data.progress = currentProgress;
     pthread_mutex_unlock(&progress_mutex);
 }
 
@@ -279,7 +279,7 @@ int main(int argc, char *argv[]) {
     devs = getAxeMidiDevs(&amount, &index);
 
     data.mode = SEND_MODE;
-    data.progbarval = 0.0;
+    data.progress = 0.0;
     data.ret = 0;
 
     gtk_init(&argc, &argv);
