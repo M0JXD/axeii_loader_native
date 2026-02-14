@@ -1,5 +1,5 @@
 /*    axeii_alsa.c - ALSA backend for AxeII-Loader
- *    Copyright (C) 2025  Jamie Drinkell
+ *    Copyright (C) 2025-2026  Jamie Drinkell
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
