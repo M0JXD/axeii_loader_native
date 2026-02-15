@@ -15,8 +15,6 @@
  *    with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-/*#include <stdio.h>*/
-
 #include <alsa/asoundlib.h>
 #include "../midi_interface.h"
 
