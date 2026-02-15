@@ -1,5 +1,9 @@
 /*    cli.c - CLI interface to send/receive data from an Axe-FX II
  *    Copyright (C) 2025-2026  Jamie Drinkell
+ *    This project is dual licensed under the BSD-2-Clause and GPLv2-or-later
+ *    depending on the backend it uses. Please see README.
+ *
+ ********************************* GPL HEADER *********************************
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by

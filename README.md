@@ -74,9 +74,14 @@ By default it will build both the CLI and GUI programs, although you can specify
 ## License
 
 The original license was MIT (which is my preference), but this had to be changed to the GPLv2.
-When creating the UI I realised I needed to get the MIDI device hardware strings/names on Linux.
+When creating the first UI I realised I needed to get the MIDI device hardware strings/names.
 One option is to call and parse `amidi -l` but that is poor and not future-proof (if the output layout changes in a future version) and parsing strings in C is a nightmare. So instead the better option is to do the RawMIDI calls that amidi itself does. To do this right I essentially refactored amidi's source to just what the -l option does. This makes my code a derivative of amidi's and hence the project license had to be updated.
 An added benefit however is that the CLI version can now attempt to work out the correct device without needing to pass it.
+
+Now that a FreeBSD OSS backend has been added, all the code is dual licensed apart from the ALSA backend file which is only available under the GPL.
+When building for ALSA, the amidi derived code is needed and the finaly binary must be distributed as per the GPL.
+With the OSS backend, the GPL derived code is not used and you may optionally distribute under either the GPL or the BSD 2 Clause.
+From my understanding I believe this does not violate the GPL, but if it does please make an issue and I will promptly fix.
 
 ## Notes
 
