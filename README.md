@@ -79,9 +79,9 @@ One option is to call and parse `amidi -l` but that is poor and not future-proof
 An added benefit however is that the CLI version can now attempt to work out the correct device without needing to pass it.
 
 Now that a FreeBSD OSS backend has been added, all the code is dual licensed apart from the ALSA backend file which is only available under the GPL.
-When building for ALSA, the amidi derived code is needed and the finaly binary must be distributed as per the GPL.
-With the OSS backend, the GPL derived code is not used and you may optionally distribute under either the GPL or the BSD 2 Clause.
-From my understanding I believe this does not violate the GPL, but if it does please make an issue and I will promptly fix.
+When building for ALSA, the amidi derived code is needed and the final binary must be distributed as per the GPLv2.
+With the OSS backend, the amidi derived code is not used and you may optionally use/distribute under either the GPLv2 or the BSD 2 Clause.
+From my understanding I believe this does not violate the GPLv2, but if it does please make an issue and I will promptly fix.
 
 ## Notes
 
