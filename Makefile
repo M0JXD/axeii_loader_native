@@ -123,7 +123,7 @@ run:
 	./build_dir/axeiiloader-gui
 
 # Run various scenarios that should fail
-tests:
+test:
 	# Try to send an XL preset to an OG
 	-./build_dir/axeiiloader -i test_files/presets/xl/MarkDay90sEVHSolo_xl.syx
 	@echo -e "\n"
@@ -134,3 +134,13 @@ tests:
 	@sleep 1
 	# Try to fetch a preset location 500 on an OG
 	-./build_dir/axeiiloader -p 500
+
+install: build_dir/axeiiloader build_dir/axeiiloader-gui
+	cp ./build_dir/axeiiloader ./build_dir/axeiiloader-gui -t /usr/local/bin
+	cp ./assets/axeiiloader.png -t /usr/local/share/pixmaps
+	cp ./assets/axeiiloader.desktop -t /usr/local/share/applications
+
+uninstall:
+	rm /usr/local/bin/axeiiloader /usr/local/bin/axeiiloader-gui
+	rm /usr/local/share/pixmaps/axeiiloader.png
+	rm /usr/local/share/applications/axeiiloader.desktop

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=2.1
+Name=Axe-FX II Loader
+Comment=MIDI loading utility for the Axe-FX II
+Exec=axeiiloader-gui
+Icon=axeiiloader
+Terminal=false
+Categories=Utility;AudioVideo;Audio
