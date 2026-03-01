@@ -137,8 +137,8 @@ test:
 
 install: build_dir/axeiiloader build_dir/axeiiloader-gui
 	cp ./build_dir/axeiiloader ./build_dir/axeiiloader-gui -t /usr/local/bin
-	cp ./assets/axeiiloader.png -t /usr/local/share/pixmaps
-	cp ./assets/axeiiloader.desktop -t /usr/local/share/applications
+	mkdir -p /usr/local/share/pixmaps && cp ./assets/axeiiloader.png -t /usr/local/share/pixmaps
+	mkdir -p /usr/local/share/applications && cp ./assets/axeiiloader.desktop -t /usr/local/share/applications
 
 uninstall:
 	rm /usr/local/bin/axeiiloader /usr/local/bin/axeiiloader-gui
