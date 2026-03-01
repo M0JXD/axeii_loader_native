@@ -80,6 +80,7 @@ void progressCallback(double currentProgress) {
     }
 }
 
+/* axeii_loader needs us to implement this */
 void nameProvider(char *name) {
     printf("File saved as %s\n", name);
 }
@@ -101,7 +102,7 @@ int main(int argc, char *argv[]) {
     path[strlen(path)] = '/'; path[strlen(path) + 1] = '\0';
 
     puts("===== AXE-FX II LOADER =====");
-    while((opt = getopt(argc, argv, "d:i:o:p:t:smh")) != -1) {
+    while((opt = getopt(argc, argv, "d:i:o:p:t:mh")) != -1) {
         switch (opt) {
             /* MIDI Device */
             case 'd':
@@ -199,7 +200,7 @@ int main(int argc, char *argv[]) {
                                          printf("Attempting to send to location %d...\n", location);
             }
             ret = sendFile(path, properties, location);
-        } else if (mode == RECEIVE) {
+        } else {
             puts("=== RECEIVE MODE ===");
             char* unit = properties & IS_OG_UNIT ? "OG/MKII" :
                          properties & IS_XL_UNIT ? "XL" : "XL Plus";
