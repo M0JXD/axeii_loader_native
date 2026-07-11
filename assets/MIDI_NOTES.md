@@ -1,21 +1,21 @@
 # AXE-FX II MIDI NOTES
 
-General notes as I debugged/reversed engineered sending/loading presets and IRs to the Axe-FX II MkII.
+General notes as I debugged/reversed engineered sending/loading presets and IRs to the Axe-FX II MkII.  
 
 ## MIDI BEATS
-The Axe-FX sends regular tempo beats of the form:
-F0 00 01 74 03 10 F7
+The Axe-FX sends regular tempo beats of the form:  
+`F0 00 01 74 03 10 F7`
 
 ## PRESETS
 
-An Original/MkII preset consists of 34 sysex messages; 1 start message, 32 data ones and 1 end message.
-They are 6487 bytes in total. (NB: Each byte measurement is F0 to F7 inclusive)
+An Original/MkII preset consists of 34 sysex messages; 1 start message, 32 data ones and 1 end message.  
+They are 6487 bytes in total. (NB: Each byte measurement is F0 to F7 inclusive)  
 
 - The start message is 12 bytes
 - Each data message is 202 bytes
 - The end message is 11 bytes
 
-XL and XL+ presets are a bit different. Same format, but they have 64 data messages (66 total).
+XL and XL+ presets are a bit different. Same format, but they have 64 data messages (66 total).  
 So 12951 bytes total. To clarify:
 
 - The start message is still 12 bytes
@@ -24,9 +24,10 @@ So 12951 bytes total. To clarify:
 
 ### SENDING PRESETS
 
-On the send side, it's just the file. It seems after each syx message in the file there is one message received.
-For the Brian may preset I received in return for each sysex in the file:
+On the send side, it's just the file. It seems after each syx message in the file there is one message received.  
+For the Brian may preset I received in return for each sysex in the file:  
 
+```
 F0 00 01 74 03 64 77 00 15 F7
 F0 00 01 74 03 64 78 00 1A F7
 F0 00 01 74 03 64 78 00 1A F7
@@ -34,28 +35,33 @@ F0 00 01 74 03 64 78 00 1A F7
 F0 00 01 74 03 64 78 00 1A F7
 F0 00 01 74 03 64 79 00 1B F7
 F0 00 01 74 03 14 00 20 32 F7
+```
 
-64 is the ID for a multipurpose response.
-After the 64, the 77, 78 or 79 indicates the type of "packet" it received. (Start, data or end packet)
-"00" is the error byte (no errors here!).
-And the last byte is the checksum.
-14 is a get preset number response.
+These bytes are interpreted as:
+
+- 64 is the ID for a multipurpose response.
+- After the 64, 77, 78 or 79 indicates the type of "packet" it received. (Start, data or end packet)
+- "00" is the error byte (no errors here!).
+- And the last byte before F7 is the checksum.
+- The 14 ID is a get preset number response from the Axe-FX II, seems that Fractal-Bot requests it.
 
 ### GETTING PRESETS
 
-This command was sent for getting preset 24:
-F0 00 01 74 03 03 00 18 1D F7
+This command was sent for getting preset 24:  
+`F0 00 01 74 03 03 00 18 1D F7`
 
 Which returned:
 
+```
 F0 00 01 74 03 77 7F 00 00 10 1E F7
 ... data packets ...
 F0 00 01 74 03 79 79 1C 00 1A F7
+```
 
-Which is the same as the sysex file that it saved.
-
+Which is the same as the sysex file that it saved.  
 Requests sent for other numbers:
 
+```
 000: F0 00 01 74 03 03 00 00 05 F7
 100: F0 00 01 74 03 03 00 64 61 F7
 127: F0 00 01 74 03 03 00 7F 7A F7
@@ -65,9 +71,11 @@ Requests sent for other numbers:
 256: F0 00 01 74 03 03 02 00 07 F7
 300: F0 00 01 74 03 03 02 2C 2B F7
 383: F0 00 01 74 03 03 02 7F 78 F7
+```
 
 So it's bank and then number. On the XL+ (which is the same aside from the expected ID and checksum byte) the continued numbers are (Thank you @Wepeell!):
 
+```
 Bank D
 384: F0 00 01 74 07 03 03 00 02 F7
 448: F0 00 01 74 07 03 03 40 42 F7
@@ -80,41 +88,44 @@ Bank F
 640: F0 00 01 74 07 03 05 00 04 F7
 704: F0 00 01 74 07 03 05 40 44 F7
 767: F0 00 01 74 07 03 05 7F 7B F7
+```
 
 Which is clear that the bank number just increases again :)
 
 ## IRs
 
-An IR consists of 66 messages, 1 start message, 64 data ones and 1 end message.
-IRs from OG/MkII are 10904 bytes, but XL/XL+ are 10905.
-There's an extra byte in the start packet (presumably to designate the extra slots)
+An IR consists of 66 messages; 1 start message, 64 data ones and 1 end message.  
+IRs from OG/MkII are 10904 bytes, but XL/XL+ are 10905.  
+XL's have an extra byte in the start packet (presumably to designate the extra slots).
 
 - The start message is 11 or 12 bytes depending on whether it was captured on an original or XL
 - Each data message is 170 bytes (F0 to F7 inclusive)
 - The end message is 13 bytes
 
-Note the cab I sent was captured from an XL+, as the 5th byte is 0x07.
-Fractal bot changes the device byte and recalculates the checksum for each sysex message.
+Note the cab I sent was captured from an XL+, as the 5th byte is 0x07.  
+Fractal bot changes the device byte and recalculates the checksum for each sysex message.  
 
 If you send the command bytes from the start of the IR sysex file without calculating a location,
-(provided it's the right unit type of course), then it loads into the currently selected cabinet slot for your preset.
-To check: does this works without redoing the device byte and checksums for the connected unit?
-I've found if you resize a XL IR's start message but don't change the type it doesn't work. Be careful
+(provided it's the right unit type of course), then it loads into the currently selected cabinet slot for your preset.  
+I've found if you resize a XL IR's start message but don't change the type it doesn't work. Be careful.
 
 Start message:
-7th byte is the location (or location - 1 in hex, as 0x59 is for 90)
-IDK how it works with the XL/XLP. Presumably the next byte helps?
-IDK what the 0x10 is for yet either.
+7th byte is the location (or location - 1 in hex, as 0x59 is for 90)    
+IDK what the 0x10 is for.
 
 ### Sending IRs
 
 FractalBot to Axe, sending LT_MIX_9 to cab 90:
 
+```
 F0 00 01 74 03 7A 59 00 10 35 F7
 ... data packets ...
 F0 00 01 74 03 7C 08 2C 20 06 0E 76 F7
+```
 
 In return from the Axe-FX (this is the same case as the how the preset ones respond):
+
+```
 F0 00 01 74 03 64 7A 00 18 F7
 ... some response packets ...
 F0 00 01 74 03 64 7B 00 19 F7
@@ -123,23 +134,27 @@ F0 00 01 74 03 64 7B 00 19 F7
 ... more response packets ...
 F0 00 01 74 03 64 7B 00 19 F7
 F0 00 01 74 03 64 7C 00 1E F7
+```
 
 Sending LT_MIX_9 to cab Location 91:
 
+```
 F0 00 01 74 03 7A 5A 00 10 36 F7
 ... data packets ...
 F0 00 01 74 03 7C 08 2C 20 06 0E 76 F7
+```
 
-Sending to Scratch 1:
-F0 00 01 74 03 7A 64 00 10 08 F7
+Sending to Scratch 1:  
+`F0 00 01 74 03 7A 64 00 10 08 F7`
 
-Sending to Scratch 4:
-F0 00 01 74 03 7A 67 00 10 0B F7
+Sending to Scratch 4:  
+`F0 00 01 74 03 7A 67 00 10 0B F7`
 
 So scratch locations are just the numbers after 100.
 
 Information on XL(+) (Thanks again @Wepeell!):
 
+```
 1:    F0 00 01 74 07 7A 00 00 00 10 68 F7
 128:  F0 00 01 74 07 7A 00 7F 00 10 17 F7
 
@@ -166,25 +181,27 @@ Information on XL(+) (Thanks again @Wepeell!):
 
 Scr1: F0 00 01 74 07 7A 08 00 00 10 60 F7
 Scr4: F0 00 01 74 07 7A 08 03 00 10 63 F7
+```
 
-So it's much more in line with the Preset sending method, bank and then number.
+So it's much more in line with the Preset sending method, bank and then number.  
 Still wonder what the 0x00 and 0x10 is for.
 
 ### Getting IRs
 
-To get Cab 1 on Mk1/2:
-F0 00 01 74 03 19 00 1F F7
+To get Cab 1 on Mk1/2:  
+`F0 00 01 74 03 19 00 1F F7`
 
-To get Cab 50 on Mk1/2:
-F0 00 01 74 03 19 31 2E F7
+To get Cab 50 on Mk1/2:  
+`F0 00 01 74 03 19 31 2E F7`
 
-Okay that's obvious too. But how does it work with the XL??
+Okay that's obvious too. But how does it work with the XL??  
 I'm guessing it'll do the bank/number again and this will get IR 1...
 
-F0 00 01 74 07 19 00 00 xx F7
+`F0 00 01 74 07 19 00 00 xx F7`
 
 Wepeell's findings (Again thank you!!):
 
+```
 01:   F0 00 01 74 07 19 00 00 1B F7
 128:  F0 00 01 74 07 19 00 7F 64 F7
 
@@ -208,5 +225,6 @@ Wepeell's findings (Again thank you!!):
 
 897:  F0 00 01 74 07 19 07 00 1C F7
 1024: F0 00 01 74 07 19 07 7F 63 F7
+```
 
 Man I'm good. (Jk I'm really not)
