@@ -63,12 +63,12 @@ I'm waiting to see what the likes of Cinnamon and XFCE do before porting it to G
 
 ## Building
 
-First make sure all dependencies are installed:
+First make sure all dependencies are installed on your system:
 - ALSA on Linux (on Debian based this can be got with `sudo apt install libasound2-dev`)
 - OSS on FreeBSD (comes with base)
 - GTK3 if building the UI version
 
-Then just issue `make`. The Makefile works with both GNU and BSD versions of Make, and it will build into a folder it creates called *build_dir*.
+Then just issue `make`. The Makefile works with both GNU and BSD versions of Make, and it will create binaries in *build*.
 By default it will build both the CLI and GUI programs, although you can specify either `cli` or `gui` targets.
 
 ## License
