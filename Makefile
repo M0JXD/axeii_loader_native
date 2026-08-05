@@ -18,6 +18,8 @@
 #	You should have received a copy of the GNU General Public License along
 #	with this program; if not, see <https://www.gnu.org/licenses/>.
 
+ERR_FLAGS := -Wall -Werror -Wextra -Wpedantic
+
 all: cli gui
 
 cli: build build/axeiiloader
@@ -31,11 +33,11 @@ build/axeiiloader: build/axeii_backend.o build/axeii_loader.o src/cli.c
 	NAME=`uname -s` ; \
 	if [ $$NAME = "Linux" ]; then \
 		cc src/cli.c build/axeii_backend.o build/axeii_loader.o -o build/axeiiloader \
-		-Wall -Werror -Wextra -Wpedantic -O2 -lasound ; \
+		$(ERR_FLAGS) -O2 -lasound ; \
 	fi ; \
 	if [ $$NAME = "FreeBSD" ]; then \
 		cc src/cli.c build/axeii_backend.o build/axeii_loader.o -o build/axeiiloader \
-		-Wall -Werror -Wextra -Wpedantic -O2 ; \
+		$(ERR_FLAGS) -O2 ; \
 	fi ;
 
 build/axeiiloader-gui: build/axeii_backend.o build/axeii_loader.o src/ui.c src/gtk/axeiiloader_gtk.c src/gtk/axeiiloader_gtk.h
@@ -43,13 +45,13 @@ build/axeiiloader-gui: build/axeii_backend.o build/axeii_loader.o src/ui.c src/g
 	if [ $$NAME = "Linux" ]; then \
 		cc `pkg-config --cflags gtk+-3.0` src/ui.c src/gtk/axeiiloader_gtk.c build/axeii_backend.o build/axeii_loader.o \
 		-o build/axeiiloader-gui \
-		-Wall -Werror -Wpedantic \
+		$(ERR_FLAGS) \
 		`pkg-config --libs gtk+-3.0` -lasound ; \
 	fi ; \
 	if [ $$NAME = "FreeBSD" ]; then \
 		cc `pkg-config --cflags gtk+-3.0` src/ui.c src/gtk/axeiiloader_gtk.c build/axeii_backend.o build/axeii_loader.o \
 		-o build/axeiiloader-gui \
-		-Wall -Werror -Wpedantic \
+		$(ERR_FLAGS) \
 		`pkg-config --libs gtk+-3.0` ; \
 	fi ;
 
@@ -63,25 +65,19 @@ src/gtk/axeiiloader_gtk.h: src/gtk/builder.ui src/gtk/axeiiloader_gtk.gresource.
 # TODO: Does Clang have the issue?
 build/axeii_loader.o: src/axeii_loader.c
 	cc -c src/axeii_loader.c -o build/axeii_loader.o \
-	-Wall -Werror -Wpedantic -O1
+	$(ERR_FLAGS) -O1
 
 # Detect the platform and build ALSA on Linux, or OSS on FreeBSD
 build/axeii_backend.o: src/alsa/axeii_alsa.c src/oss/axeii_oss.c
 	NAME=`uname -s` ; \
 	if [ $$NAME = "Linux" ]; then \
 		cc -c src/alsa/axeii_alsa.c -o build/axeii_backend.o \
-		-Wall -Werror -Wextra -Wpedantic -O2 ; \
+		$(ERR_FLAGS) -O2 ; \
 	fi ; \
 	if [ $$NAME = "FreeBSD" ]; then \
 		cc -c src/oss/axeii_oss.c -o build/axeii_backend.o \
-		-Wall -Werror -Wextra -Wpedantic -O2 ; \
+		$(ERR_FLAGS) -O2 ; \
 	fi ;
-
-# Build the ALSA CLI version with TCC bc why not? You should start clean for this!
-cli-tcc: build
-	tcc -c src/alsa/axeii_alsa.c -o build/axeii_backend.o
-	tcc -c src/axeii_loader.c -o build/axeii_loader.o
-	tcc src/cli.c build/axeii_loader.o build/axeii_backend.o -o build/axeiiloader -Wall -lasound
 
 clean:
 	rm -r build
