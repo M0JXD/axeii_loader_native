@@ -26,6 +26,8 @@
 #include "gtk/axeiiloader_gtk.h"
 #include "axeii_loader.h"
 
+#define UNUSED(x) (void)(x)
+
 enum MODE {
     SEND_MODE = 0,
     RECEIVE_MODE
@@ -54,6 +56,7 @@ struct _thread_data {
 } data;
 
 int idleUpdater(gpointer user_data) {
+    UNUSED(user_data);
     int ret = G_SOURCE_CONTINUE;
     if (pthread_mutex_trylock(&progress_mutex) != EBUSY) {
         if (data.progress >= 0) {
@@ -88,6 +91,7 @@ int idleUpdater(gpointer user_data) {
 }
 
 void* threadLauncher(void *arg) {
+    UNUSED(arg);
     initMIDI(devs[data.midiIndex]->hw_string);
     if (data.mode) {
         data.ret = getFile(data.path, data.properties, data.location);
@@ -190,6 +194,7 @@ void checkAndEnable(void) {
 
 /* Callbacks */
 void aboutDialog(GtkMenuItem* self, gpointer user_data) {
+    UNUSED(self); UNUSED(user_data);
     GtkWidget *dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL,
                                                GTK_MESSAGE_OTHER, GTK_BUTTONS_CLOSE,
     "Note 1: Preset location is unrequired for sending, as it's loaded to the edit buffer.\n"
@@ -204,23 +209,28 @@ void aboutDialog(GtkMenuItem* self, gpointer user_data) {
 }
 
 void box_cb(GtkComboBox* self, gpointer user_data) {
+    UNUSED(self); UNUSED(user_data);
     checkAndEnable();
 }
 
 void tabs_cb(GtkNotebook* self, GtkWidget* page, guint page_num, gpointer user_data) {
+    UNUSED(self); UNUSED(page); UNUSED(user_data);
     data.mode = page_num;
     checkAndEnable();
 }
 
 void file_cb(GtkFileChooserButton* self, gpointer user_data) {
+    UNUSED(self); UNUSED(user_data);
     checkAndEnable();
 }
 
 void rectype_cb(GtkToggleButton* self, gpointer user_data) {
+    UNUSED(self); UNUSED(user_data);
     checkAndEnable();
 }
 
 void start_cb(GtkButton* self, gpointer user_data) {
+    UNUSED(self); UNUSED(user_data);
     char *str;
     gtk_widget_set_sensitive(GTK_WIDGET(startbutton), FALSE);
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progressbar), 0.0);
