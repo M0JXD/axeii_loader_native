@@ -28,6 +28,7 @@
 typedef struct DEV_INFO_S {
     char hw_string[32];
     char hw_name[120];
+    char type;  /* Axe-FX II Type */
 } dev_info_t;
 
 /* FUNCTIONS */
@@ -73,5 +74,42 @@ dev_info_t** getAxeMidiDevs(int *amount, int *axe_index);
  * @param devs array of MIDI devices to be freed
  */
 void freeAxeMidiDevs(dev_info_t **devs);
+
+/** Detect the unit type
+ * @return char The unit type as 'o' (OG), 'x' (XL), 'p' (XL Plus) or 'u' (Unknown)
+ */
+char detectUnitType(char *devString) {
+    /* Yeah yeah code in the header but how else can I do this cleanly? */
+    char type = 'u';
+    unsigned char response[8];
+    unsigned char og_command[8]  = { 0xF0, 0x00, 0x01, 0x74, 0x03, 0x08, 0x0E, 0xF7 };
+    unsigned char xl_command[8]  = { 0xF0, 0x00, 0x01, 0x74, 0x06, 0x08, 0x0B, 0xF7 };
+    unsigned char xlp_command[8] = { 0xF0, 0x00, 0x01, 0x74, 0x07, 0x08, 0x0A, 0xF7 };
+    unsigned char og_disconnect[8]  = { 0xF0, 0x00, 0x01, 0x74, 0x03, 0x42, 0x44, 0xF7 };
+    unsigned char xl_disconnect[8]  = { 0xF0, 0x00, 0x01, 0x74, 0x06, 0x42, 0x41, 0xF7 };
+    unsigned char xlp_disconnect[8] = { 0xF0, 0x00, 0x01, 0x74, 0x07, 0x42, 0x40, 0xF7 };
+
+    initMIDI(devString);
+    /* Send all three commands */
+    sendMidi(og_command, 8);
+    sendMidi(xl_command, 8);
+    sendMidi(xlp_command, 8);
+
+    /* Get which response was obtained, understand the unit type and drop everything else */
+    getMidi(response, 8);
+    if (response[4] == 0x03) {
+        type = 'o';
+        sendMidi(og_disconnect, 8);
+    } else if (response[4] == 0x06) {
+        type = 'x';
+        sendMidi(xl_disconnect, 8);
+    } else if (response[4] == 0x07) {
+        type = 'p';
+        sendMidi(xlp_disconnect, 8);
+    }
+    clearMidiInBuffer();
+    closeMIDI();
+    return type;
+}
 
 #endif
